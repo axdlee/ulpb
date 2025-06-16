@@ -137,6 +137,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useShuangpinStore } from '../stores/shuangpin'
 import { getShuangpinCode, generatePracticeText, commonChars, checkKeyMatch } from '../utils/pinyin'
 import { getLesson } from '../data/lessons'
+import { updateErrorRecord } from '../utils/review'
 
 const router = useRouter()
 const route = useRoute()
@@ -151,7 +152,18 @@ const accuracy = ref(100)
 const errorKeys = ref(new Set())
 
 // 当前课程信息
-const currentLesson = ref(getLesson(parseInt(route.params.lessonId)))
+const currentLesson = ref(null)
+
+// 初始化课程信息
+onMounted(() => {
+  if (route.params.type === 'review') {
+    // 复习模式
+    currentLesson.value = JSON.parse(route.params.lesson)
+  } else {
+    // 普通练习模式
+    currentLesson.value = getLesson(parseInt(route.params.lessonId))
+  }
+})
 
 // 练习文本
 const practiceText = ref([])
@@ -186,9 +198,17 @@ const isErrorKey = (key) => {
 // 开始练习
 const startPractice = () => {
   // 生成练习文本
-  const chars = currentLesson.value.type === 'initial' 
-    ? currentLesson.value.initials.flatMap(initial => commonChars[initial] || [])
-    : currentLesson.value.examples.map(ex => ex.char)
+  let chars
+  if (currentLesson.value.type === 'review') {
+    // 复习模式直接使用课程中的汉字
+    chars = currentLesson.value.chars
+  } else if (currentLesson.value.type === 'initial') {
+    // 声母练习模式
+    chars = currentLesson.value.initials.flatMap(initial => commonChars[initial] || [])
+  } else {
+    // 韵母练习模式
+    chars = currentLesson.value.examples.map(ex => ex.char)
+  }
   
   const text = generatePracticeText(chars, 20)
   practiceText.value = Array.from(text).map(char => ({
@@ -217,7 +237,12 @@ const quitPractice = () => {
     clearInterval(timer.value)
   }
   window.removeEventListener('keydown', handleKeydown)
-  router.push('/learning')
+  
+  if (route.params.type === 'review') {
+    router.push('/review')
+  } else {
+    router.push('/learning')
+  }
 }
 
 // 处理键盘输入
@@ -232,12 +257,15 @@ const handleKeydown = (event) => {
   const key = event.key.toLowerCase()
   if (!currentPinyin.value) return
 
-  const { shengmu, yunmu } = currentPinyin.value
+  const { char, shengmu, yunmu } = currentPinyin.value
   
   if (checkKeyMatch(key, shengmu, yunmu)) {
     // 正确按键
     errorKeys.value.delete(key)
     currentIndex.value++
+    
+    // 更新错误记录（正确）
+    updateErrorRecord(char, shengmu, yunmu, false)
     
     if (currentIndex.value >= practiceText.value.length) {
       // 完成练习
@@ -247,6 +275,9 @@ const handleKeydown = (event) => {
     // 错误按键
     errorKeys.value.add(key)
     updateAccuracy()
+    
+    // 更新错误记录（错误）
+    updateErrorRecord(char, shengmu, yunmu, true)
   }
 }
 
@@ -276,7 +307,9 @@ const finishPractice = () => {
   })
 
   // 更新课程进度
-  store.updateLessonProgress(currentLesson.value.id, 100)
+  if (currentLesson.value.id) {
+    store.updateLessonProgress(currentLesson.value.id, 100)
+  }
 }
 
 // 格式化时间
@@ -287,10 +320,6 @@ const formatTime = (seconds) => {
 }
 
 // 组件生命周期
-onMounted(() => {
-  // 初始化练习数据
-})
-
 onUnmounted(() => {
   if (timer.value) {
     clearInterval(timer.value)
