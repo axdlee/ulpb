@@ -13,12 +13,28 @@
           <div class="flex flex-wrap items-center justify-between gap-4">
             <!-- 方案选择 -->
             <div class="flex items-center space-x-4">
-              <label class="text-sm font-medium text-gray-700">双拼方案</label>
+              <label class="text-lg font-medium" :class="{
+                'text-gray-900': store.currentTheme !== 'dark',
+                'text-white': store.currentTheme === 'dark'
+              }">双拼方案</label>
               <select
                 v-model="store.currentScheme"
-                class="block w-48 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                class="block w-48 rounded-lg border-0 py-2.5 pl-4 pr-10 text-lg font-medium shadow-lg ring-1 ring-inset transition-colors duration-200"
+                :class="{
+                  'bg-white/90 text-gray-900 ring-gray-300 focus:ring-2 focus:ring-blue-500': store.currentTheme !== 'dark',
+                  'bg-gray-800/90 text-white ring-gray-700 focus:ring-2 focus:ring-blue-400': store.currentTheme === 'dark'
+                }"
               >
-                <option v-for="scheme in store.availableSchemes" :key="scheme.value" :value="scheme.value">
+                <option
+                  v-for="scheme in store.availableSchemes"
+                  :key="scheme.value"
+                  :value="scheme.value"
+                  class="py-2"
+                  :class="{
+                    'text-gray-900 bg-white': store.currentTheme !== 'dark',
+                    'text-white bg-gray-800': store.currentTheme === 'dark'
+                  }"
+                >
                   {{ scheme.name }}
                 </option>
               </select>
@@ -95,41 +111,23 @@
                   </div>
                 </div>
 
-                <div class="keyboard-layout grid grid-cols-10 gap-3">
+                <div class="keyboard-layout grid grid-cols-10 gap-6">
                   <template v-for="key in keyboardLayout" :key="key.key">
                     <div
-                      class="key-cell relative aspect-square rounded-lg border-2 transition-all cursor-pointer"
+                      class="key-cell relative aspect-square rounded-xl border-2 transition-all cursor-pointer"
                       :class="{
-                        'border-green-500 bg-green-100 shadow-lg': getKeyStatus(key.key) === 'mastered',
-                        'border-blue-500 bg-blue-100 shadow-lg': getKeyStatus(key.key) === 'learning',
-                        'border-gray-300 hover:border-blue-400 hover:bg-blue-50': getKeyStatus(key.key) === 'new',
-                        'ring-2 ring-blue-500 ring-offset-2': isKeyHighlighted(key.key)
+                        'border-green-500 bg-green-100/90 shadow-lg': getKeyStatus(key.key) === 'mastered',
+                        'border-blue-500 bg-blue-100/90 shadow-lg': getKeyStatus(key.key) === 'learning',
+                        'border-gray-300 hover:border-blue-400 hover:bg-blue-50/90': getKeyStatus(key.key) === 'new',
+                        'ring-4 ring-blue-500 ring-offset-4': isKeyHighlighted(key.key)
                       }"
                       @click="selectKey(key)"
                     >
-                      <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span class="text-xl font-bold" :class="{ 
-                          'text-green-700': getKeyStatus(key.key) === 'mastered',
-                          'text-blue-700': getKeyStatus(key.key) === 'learning',
-                          'text-gray-900': getKeyStatus(key.key) === 'new'
-                        }">
-                          {{ key.key }}
-                        </span>
-                        <div class="mt-1 text-sm space-y-0.5">
-                          <div :class="{ 
-                            'text-green-600 font-medium': getKeyStatus(key.key) === 'mastered',
-                            'text-blue-600 font-medium': getKeyStatus(key.key) === 'learning',
-                            'text-gray-800': getKeyStatus(key.key) === 'new'
-                          }">
-                            {{ key.initial || '·' }}
-                          </div>
-                          <div :class="{ 
-                            'text-green-600 font-medium': getKeyStatus(key.key) === 'mastered',
-                            'text-blue-600 font-medium': getKeyStatus(key.key) === 'learning',
-                            'text-gray-800': getKeyStatus(key.key) === 'new'
-                          }">
-                            {{ key.final || '·' }}
-                          </div>
+                      <div class="absolute inset-0 flex flex-col items-center justify-center p-2">
+                        <span class="text-2xl font-bold mb-1">{{ key.key.toUpperCase() }}</span>
+                        <div class="text-sm space-y-1">
+                          <div v-if="key.shengmu" class="text-blue-600">{{ key.shengmu }}</div>
+                          <div v-if="key.yunmu" class="text-green-600">{{ key.yunmu }}</div>
                         </div>
                       </div>
                     </div>
@@ -423,53 +421,58 @@ const isKeyHighlighted = (key) => {
 
 <style scoped>
 .keyboard-layout {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-  padding: 2rem;
-  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 255, 0.9) 100%);
+  padding: 3rem;
+  border-radius: 1.5rem;
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.key-cell {
+  min-height: 90px;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.key-cell {
-  min-height: 70px;
-  background-color: white;
-  transition: all 0.3s ease-in-out;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
 .key-cell:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 @media (min-width: 640px) {
   .key-cell {
-    min-height: 90px;
+    min-height: 110px;
   }
 }
 
 @media (min-width: 1024px) {
   .key-cell {
-    min-height: 100px;
+    min-height: 130px;
   }
 }
 
 /* 暗黑主题适配 */
 :deep([data-theme='dark']) {
   .keyboard-layout {
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(17, 24, 39, 0.9) 100%);
   }
 
   .key-cell {
-    background-color: #374151;
-    border-color: #4B5563;
+    background-color: rgba(55, 65, 81, 0.9);
+    border-color: rgba(75, 85, 99, 0.9);
   }
 
   .key-cell:hover {
-    background-color: #4B5563;
+    background-color: rgba(75, 85, 99, 0.9);
   }
 }
 </style> 
