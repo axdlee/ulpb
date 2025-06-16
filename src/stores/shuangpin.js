@@ -46,10 +46,66 @@ const SHUANGPIN_SCHEMES = {
   }
 }
 
+// 小鹤双拼方案数据
+const xiaohe = {
+  name: '小鹤双拼',
+  shengmu: {
+    b: 'b', p: 'p', m: 'm', f: 'f',
+    d: 'd', t: 't', n: 'n', l: 'l',
+    g: 'g', k: 'k', h: 'h',
+    j: 'j', q: 'q', x: 'x',
+    zh: 'v', ch: 'i', sh: 'u', r: 'r',
+    z: 'z', c: 'c', s: 's', y: 'y', w: 'w'
+  },
+  yunmu: {
+    a: 'a', o: 'o', e: 'e', i: 'i', u: 'u', v: 'v',
+    ai: 'd', ei: 'w', ui: 'v',
+    ao: 'c', ou: 'z', iu: 'q',
+    ie: 'x', ue: 't',
+    an: 'j', en: 'f', in: 'n', un: 'p',
+    ang: 'h', eng: 'g', ing: 'k', ong: 's',
+    ia: 'w', iao: 'k', ian: 'm', iang: 'l',
+    iong: 's', ua: 'w', uai: 'y', uan: 'r', uang: 'l',
+    uo: 'o', ve: 't'
+  }
+}
+
+// 生成键盘布局数据
+function generateKeyboardLayout(scheme) {
+  const layout = [
+    'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
+    'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',
+    'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'
+  ]
+
+  return layout.map(key => {
+    const data = { key }
+    
+    // 查找这个键位上的声母
+    for (const [shengmu, k] of Object.entries(scheme.shengmu)) {
+      if (k === key) {
+        data.type = 'shengmu'
+        data.shengmu = shengmu
+        break
+      }
+    }
+
+    // 查找这个键位上的韵母
+    for (const [yunmu, k] of Object.entries(scheme.yunmu)) {
+      if (k === key) {
+        data.type = data.type === 'shengmu' ? 'both' : 'yunmu'
+        data.yunmu = yunmu
+      }
+    }
+
+    return data
+  })
+}
+
 export const useShuangpinStore = defineStore('shuangpin', {
   state: () => ({
     // 当前选择的双拼方案
-    currentScheme: 'microsoft',
+    currentScheme: xiaohe,
     // 当前主题
     currentTheme: 'default',
     // 主题设置
@@ -130,6 +186,13 @@ export const useShuangpinStore = defineStore('shuangpin', {
       showPinyin: true,
       showHint: true,
       difficulty: 'normal'
+    },
+    lessonProgress: {},
+    practiceStats: {
+      totalTime: 0,
+      totalChars: 0,
+      accuracy: 0,
+      speed: 0
     }
   }),
 
@@ -176,6 +239,12 @@ export const useShuangpinStore = defineStore('shuangpin', {
           count: value.count,
           examples: value.examples.slice(0, 3)
         }))
+    },
+    getCurrentSchemeLayout: (state) => {
+      return generateKeyboardLayout(state.currentScheme)
+    },
+    getLessonProgress: (state) => (lessonId) => {
+      return state.lessonProgress[lessonId] || 0
     }
   },
 
@@ -285,6 +354,14 @@ export const useShuangpinStore = defineStore('shuangpin', {
       if (this.themes[theme]) {
         this.currentTheme = theme
       }
+    },
+
+    updateLessonProgress(lessonId, progress) {
+      this.lessonProgress[lessonId] = progress
+    },
+
+    updatePracticeStats(stats) {
+      Object.assign(this.practiceStats, stats)
     }
   }
 }) 

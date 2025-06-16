@@ -1,29 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Learning from '../views/Learning.vue'
-import Practice from '../views/Practice.vue'
-import Game from '../views/Game.vue'
-import Stats from '../views/Stats.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Learning',
-    component: Learning
+    name: 'home',
+    component: () => import('../views/Home.vue')
   },
   {
-    path: '/practice',
-    name: 'Practice',
-    component: Practice
+    path: '/learning',
+    name: 'learning',
+    component: () => import('../views/KeyboardLearning.vue')
   },
   {
-    path: '/game',
-    name: 'Game',
-    component: Game
+    path: '/practice/:lessonId',
+    name: 'practice',
+    component: () => import('../views/Practice.vue')
   },
   {
     path: '/stats',
-    name: 'Stats',
-    component: Stats
+    name: 'stats',
+    component: () => import('../views/Stats.vue')
   }
 ]
 
