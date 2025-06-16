@@ -1,7 +1,7 @@
 {
   "name": "ulpb",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,17 +10,18 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.5.3",
+    "@tauri-apps/api": "^1.5.2",
+    "pinyin-pro": "^3.19.6",
     "pinia": "^2.1.7",
-    "vue": "^3.4.15",
+    "vue": "^3.3.4",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.9",
-    "@vitejs/plugin-vue": "^5.0.3",
-    "autoprefixer": "^10.4.17",
-    "postcss": "^8.4.33",
-    "tailwindcss": "^3.4.1",
-    "vite": "^5.0.12"
+    "@tauri-apps/cli": "^1.5.8",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.3.2",
+    "vite": "^5.0.0"
   }
 } 

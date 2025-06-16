@@ -6,7 +6,9 @@
       <div class="mb-8 flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-medium text-gray-900">{{ currentLesson.title }}</h1>
-          <p class="mt-1 text-sm text-gray-500">按空格开始练习</p>
+          <p class="mt-1 text-sm text-gray-500">
+            {{ isStarted ? '正在练习...' : '按空格开始练习' }}
+          </p>
         </div>
         <div class="flex items-center space-x-8 text-sm">
           <div>
@@ -27,10 +29,43 @@
       <!-- 练习内容 -->
       <div class="bg-white rounded-lg shadow-sm p-8">
         <!-- 提示字符 -->
-        <div class="mb-8 text-center">
-          <div class="text-4xl font-medium text-gray-400">{{ currentChar }}</div>
-          <div class="mt-2 text-sm text-gray-500">
-            {{ currentPinyin ? `拼音: ${currentPinyin.shengmu} + ${currentPinyin.yunmu}` : '' }}
+        <div class="mb-8">
+          <div class="flex items-center justify-center space-x-8">
+            <div class="text-center">
+              <div class="text-6xl font-medium" :class="{
+                'text-gray-300': !isStarted,
+                'text-gray-900': isStarted
+              }">{{ currentChar }}</div>
+              <div class="mt-2 text-sm text-gray-500">当前汉字</div>
+            </div>
+            <div class="text-center" v-if="currentPinyin">
+              <div class="text-3xl font-medium text-blue-600">
+                {{ currentPinyin.shengmu.toUpperCase() }}
+              </div>
+              <div class="mt-1 text-sm text-gray-500">声母</div>
+            </div>
+            <div class="text-center" v-if="currentPinyin">
+              <div class="text-3xl font-medium text-green-600">
+                {{ currentPinyin.yunmu.toUpperCase() }}
+              </div>
+              <div class="mt-1 text-sm text-gray-500">韵母</div>
+            </div>
+          </div>
+          
+          <!-- 练习进度 -->
+          <div class="mt-6">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm text-gray-500">练习进度</div>
+              <div class="text-sm text-gray-500">
+                {{ currentIndex + 1 }}/{{ practiceText.length }}
+              </div>
+            </div>
+            <div class="h-2 bg-gray-100 rounded-full">
+              <div 
+                class="h-2 bg-blue-500 rounded-full transition-all duration-300"
+                :style="{ width: `${(currentIndex / practiceText.length) * 100}%` }"
+              ></div>
+            </div>
           </div>
         </div>
 
@@ -100,6 +135,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useShuangpinStore } from '../stores/shuangpin'
+import { getShuangpinCode, generatePracticeText, commonChars, checkKeyMatch } from '../utils/pinyin'
+import { getLesson } from '../data/lessons'
 
 const router = useRouter()
 const route = useRoute()
@@ -114,25 +151,19 @@ const accuracy = ref(100)
 const errorKeys = ref(new Set())
 
 // 当前课程信息
-const currentLesson = ref({
-  id: parseInt(route.params.lessonId),
-  title: '声母键位练习 - b、p、m、f',
-  chars: ['把', '爸', '吗', '发', '怕', '马', '法', '爬']
-})
+const currentLesson = ref(getLesson(parseInt(route.params.lessonId)))
 
-// 练习进度
+// 练习文本
+const practiceText = ref([])
 const currentIndex = ref(0)
-const currentChar = computed(() => currentLesson.value.chars[currentIndex.value] || '')
+
+// 当前练习字符
+const currentChar = computed(() => practiceText.value[currentIndex.value]?.char || '')
 
 // 当前拼音
 const currentPinyin = computed(() => {
   if (!currentChar.value) return null
-  // 这里需要集成拼音转换库来获取正确的拼音
-  // 示例数据
-  return {
-    shengmu: 'b',
-    yunmu: 'a'
-  }
+  return practiceText.value[currentIndex.value]
 })
 
 // 键盘布局
@@ -144,7 +175,7 @@ const keyboardLayout = computed(() => {
 const isTargetKey = (key) => {
   if (!currentPinyin.value) return false
   const { shengmu, yunmu } = currentPinyin.value
-  return key.shengmu === shengmu || key.yunmu === yunmu
+  return key.key === shengmu || key.key === yunmu
 }
 
 // 判断是否错误键位
@@ -154,6 +185,17 @@ const isErrorKey = (key) => {
 
 // 开始练习
 const startPractice = () => {
+  // 生成练习文本
+  const chars = currentLesson.value.type === 'initial' 
+    ? currentLesson.value.initials.flatMap(initial => commonChars[initial] || [])
+    : currentLesson.value.examples.map(ex => ex.char)
+  
+  const text = generatePracticeText(chars, 20)
+  practiceText.value = Array.from(text).map(char => ({
+    char,
+    ...getShuangpinCode(char)
+  }))
+
   isStarted.value = true
   currentIndex.value = 0
   time.value = 0
@@ -180,19 +222,24 @@ const quitPractice = () => {
 
 // 处理键盘输入
 const handleKeydown = (event) => {
-  if (!isStarted.value) return
+  if (!isStarted.value) {
+    if (event.code === 'Space') {
+      startPractice()
+    }
+    return
+  }
   
   const key = event.key.toLowerCase()
-  const currentKey = keyboardLayout.value.find(k => k.key === key)
-  
-  if (!currentKey) return
+  if (!currentPinyin.value) return
 
-  if (isTargetKey(currentKey)) {
+  const { shengmu, yunmu } = currentPinyin.value
+  
+  if (checkKeyMatch(key, shengmu, yunmu)) {
     // 正确按键
-    currentIndex.value++
     errorKeys.value.delete(key)
+    currentIndex.value++
     
-    if (currentIndex.value >= currentLesson.value.chars.length) {
+    if (currentIndex.value >= practiceText.value.length) {
       // 完成练习
       finishPractice()
     }
@@ -223,7 +270,7 @@ const finishPractice = () => {
   // 更新练习统计
   store.updatePracticeStats({
     totalTime: store.practiceStats.totalTime + time.value,
-    totalChars: store.practiceStats.totalChars + currentLesson.value.chars.length,
+    totalChars: store.practiceStats.totalChars + practiceText.value.length,
     accuracy: Math.round((store.practiceStats.accuracy + accuracy.value) / 2),
     speed: Math.round((store.practiceStats.speed + speed.value) / 2)
   })

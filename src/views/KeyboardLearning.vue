@@ -16,30 +16,63 @@
       <!-- 键位学习区域 -->
       <div class="bg-white rounded-lg shadow-sm p-8">
         <!-- 键位说明 -->
-        <div class="mb-8 flex items-start space-x-8">
-          <div class="flex-1">
-            <h3 class="text-lg font-medium text-gray-900 mb-2">声母键位</h3>
-            <div class="grid grid-cols-5 gap-4">
-              <div v-for="key in shengmuKeys" 
-                   :key="key.key"
-                   class="flex items-center space-x-2 text-sm">
-                <span class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded">
-                  {{ key.key }}
-                </span>
-                <span class="text-gray-600">{{ key.shengmu }}</span>
+        <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- 声母键位 -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">声母键位</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div 
+                v-for="(keys, initial) in groupedInitials" 
+                :key="initial"
+                class="p-3 rounded-lg"
+                :class="{
+                  'bg-blue-50 ring-2 ring-blue-500 ring-offset-2': isCurrentInitial(initial)
+                }"
+              >
+                <div class="text-sm font-medium text-gray-900">{{ initial }}</div>
+                <div class="mt-1 flex items-center space-x-2">
+                  <span 
+                    v-for="key in keys" 
+                    :key="key"
+                    class="inline-flex items-center justify-center w-6 h-6 text-xs font-medium rounded"
+                    :class="{
+                      'bg-blue-100 text-blue-700': isCurrentKey(key),
+                      'bg-gray-100 text-gray-700': !isCurrentKey(key)
+                    }"
+                  >
+                    {{ key.toUpperCase() }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-          <div class="flex-1">
-            <h3 class="text-lg font-medium text-gray-900 mb-2">韵母键位</h3>
-            <div class="grid grid-cols-5 gap-4">
-              <div v-for="key in yunmuKeys" 
-                   :key="key.key"
-                   class="flex items-center space-x-2 text-sm">
-                <span class="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded">
-                  {{ key.key }}
-                </span>
-                <span class="text-gray-600">{{ key.yunmu }}</span>
+
+          <!-- 韵母键位 -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">韵母键位</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div 
+                v-for="(keys, final) in groupedFinals" 
+                :key="final"
+                class="p-3 rounded-lg"
+                :class="{
+                  'bg-green-50 ring-2 ring-green-500 ring-offset-2': isCurrentFinal(final)
+                }"
+              >
+                <div class="text-sm font-medium text-gray-900">{{ final }}</div>
+                <div class="mt-1 flex items-center space-x-2">
+                  <span 
+                    v-for="key in keys" 
+                    :key="key"
+                    class="inline-flex items-center justify-center w-6 h-6 text-xs font-medium rounded"
+                    :class="{
+                      'bg-green-100 text-green-700': isCurrentKey(key),
+                      'bg-gray-100 text-gray-700': !isCurrentKey(key)
+                    }"
+                  >
+                    {{ key.toUpperCase() }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -58,7 +91,7 @@
                       'bg-blue-50 border border-blue-200': key.type === 'shengmu',
                       'bg-green-50 border border-green-200': key.type === 'yunmu',
                       'bg-gray-50 border border-gray-200': !key.type,
-                      'ring-2 ring-blue-500 ring-offset-2': isCurrentKey(key)
+                      'ring-2 ring-blue-500 ring-offset-2': isCurrentKey(key.key)
                     }
                   ]"
                 >
@@ -81,6 +114,23 @@
           <!-- 手指指法提示 -->
           <div class="absolute inset-x-0 -bottom-20 flex justify-center">
             <img src="../assets/hands.png" alt="指法提示" class="h-32 opacity-50">
+          </div>
+        </div>
+
+        <!-- 示例汉字 -->
+        <div class="mt-12">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">练习示例</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div 
+              v-for="example in currentLesson.examples" 
+              :key="example.char"
+              class="p-4 bg-gray-50 rounded-lg text-center"
+            >
+              <div class="text-2xl font-medium text-gray-900">{{ example.char }}</div>
+              <div class="mt-2 text-sm text-gray-500">
+                {{ example.shengmu.toUpperCase() }} + {{ example.yunmu.toUpperCase() }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -114,50 +164,73 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useShuangpinStore } from '../stores/shuangpin'
+import { getLesson, getLessonProgress } from '../data/lessons'
 
 const router = useRouter()
 const store = useShuangpinStore()
-const progress = ref(0)
 
 // 当前课程信息
-const currentLesson = ref({
-  id: 1,
-  title: '声母键位学习 - b、p、m、f',
-  description: '这节课我们将学习声母 b、p、m、f 的键位。这些声母都在键盘的左手区域,分别由左手的不同手指负责。'
-})
+const currentLesson = ref(getLesson(1))
+const progress = computed(() => getLessonProgress(currentLesson.value.id))
 
-// 键盘布局数据
+// 键盘布局
 const keyboardLayout = computed(() => {
-  // 根据当前的双拼方案返回键盘布局
-  return store.getCurrentSchemeLayout()
+  return store.getCurrentSchemeLayout
 })
 
-// 声母键位
-const shengmuKeys = computed(() => {
-  return keyboardLayout.value.filter(key => key.type === 'shengmu')
+// 声母分组
+const groupedInitials = computed(() => {
+  const groups = {}
+  for (const [initial, key] of Object.entries(store.currentScheme.shengmu)) {
+    if (!groups[initial]) {
+      groups[initial] = []
+    }
+    groups[initial].push(key)
+  }
+  return groups
 })
 
-// 韵母键位
-const yunmuKeys = computed(() => {
-  return keyboardLayout.value.filter(key => key.type === 'yunmu')
+// 韵母分组
+const groupedFinals = computed(() => {
+  const groups = {}
+  for (const [final, key] of Object.entries(store.currentScheme.yunmu)) {
+    if (!groups[final]) {
+      groups[final] = []
+    }
+    groups[final].push(key)
+  }
+  return groups
 })
+
+// 判断是否当前学习的声母
+const isCurrentInitial = (initial) => {
+  return currentLesson.value.initials?.includes(initial) || false
+}
+
+// 判断是否当前学习的韵母
+const isCurrentFinal = (final) => {
+  return currentLesson.value.finals?.includes(final) || false
+}
 
 // 判断是否当前学习的键位
 const isCurrentKey = (key) => {
-  return ['b', 'p', 'm', 'f'].includes(key.key)
+  return currentLesson.value.initials?.includes(key) || 
+         currentLesson.value.finals?.includes(key)
 }
 
 // 课程控制
 const prevLesson = () => {
   if (currentLesson.value.id > 1) {
-    currentLesson.value.id--
-    // 更新课程内容
+    currentLesson.value = getLesson(currentLesson.value.id - 1)
   }
 }
 
 const nextLesson = () => {
-  currentLesson.value.id++
-  // 更新课程内容
+  const nextId = currentLesson.value.id + 1
+  const nextLesson = getLesson(nextId)
+  if (nextLesson) {
+    currentLesson.value = nextLesson
+  }
 }
 
 const startPractice = () => {
