@@ -166,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { useShuangpinStore } from '../stores/shuangpin'
 
 const store = useShuangpinStore()
@@ -188,11 +188,63 @@ const generateText = () => {
   if (!currentKey.value) {
     return '请先在键位学习页面选择要练习的键位'
   }
-  // 这里应该根据当前练习的键位生成相应的文本
-  return '今天天气真好，我们一起去公园散步吧。春天的花都开了，空气很清新。'
+
+  // 根据当前练习的键位生成相应的文本
+  const practiceWords = [
+    { char: '测', pinyin: ['ce', 'ce'] },
+    { char: '试', pinyin: ['shi', 'ui'] },
+    { char: '双', pinyin: ['shuang', 'ul'] },
+    { char: '拼', pinyin: ['pin', 'pb'] },
+    { char: '输', pinyin: ['shu', 'u'] },
+    { char: '入', pinyin: ['ru', 'ru'] },
+    { char: '法', pinyin: ['fa', 'fa'] },
+    { char: '好', pinyin: ['hao', 'hk'] }
+  ]
+
+  // 筛选包含当前练习键位的词组
+  const relevantWords = practiceWords.filter(word => {
+    const [initial, final] = word.pinyin
+    return initial.includes(currentKey.value.initial) || 
+           final.includes(currentKey.value.final)
+  })
+
+  if (relevantWords.length === 0) {
+    return '暂无包含当前键位的练习文本'
+  }
+
+  // 随机选择并组合成句子
+  const selectedWords = []
+  for (let i = 0; i < 5; i++) {
+    const randomWord = relevantWords[Math.floor(Math.random() * relevantWords.length)]
+    selectedWords.push(randomWord.char)
+  }
+
+  return selectedWords.join('')
 }
 
-const text = generateText()
+const text = ref(generateText())
+const expectedPinyinPairs = ref([])
+
+// 初始化预期的拼音对
+const initExpectedPinyin = () => {
+  const practiceWords = {
+    '测': ['ce', 'ce'],
+    '试': ['shi', 'ui'],
+    '双': ['shuang', 'ul'],
+    '拼': ['pin', 'pb'],
+    '输': ['shu', 'u'],
+    '入': ['ru', 'ru'],
+    '法': ['fa', 'fa'],
+    '好': ['hao', 'hk']
+  }
+
+  expectedPinyinPairs.value = text.value.split('').map(char => practiceWords[char] || ['', ''])
+}
+
+// 在组件挂载时初始化
+onMounted(() => {
+  initExpectedPinyin()
+})
 
 // 计算指标
 const speed = computed(() => {
@@ -220,15 +272,20 @@ const handleInput = () => {
   const char = input.value.slice(-1)
   input.value = ''
   
-  if (currentIndex.value < text.length) {
+  if (currentIndex.value < text.value.length) {
     typedChars.value[currentIndex.value] = char
     
+    // 验证输入是否正确
+    const [expectedInitial, expectedFinal] = expectedPinyinPairs.value[currentIndex.value]
+    const isCorrect = char === expectedInitial || char === expectedFinal
+
     // 记录错误
-    if (char !== text[currentIndex.value]) {
+    if (!isCorrect) {
       const error = {
-        expected: text[currentIndex.value],
+        expected: expectedPinyinPairs.value[currentIndex.value].join(''),
         actual: char,
-        count: 1
+        count: 1,
+        context: text.value[currentIndex.value]
       }
       const existingError = errors.value.find(
         e => e.expected === error.expected && e.actual === error.actual
@@ -242,7 +299,7 @@ const handleInput = () => {
     
     currentIndex.value++
 
-    if (currentIndex.value === text.length) {
+    if (currentIndex.value === text.value.length) {
       finish()
     }
   }
@@ -255,7 +312,7 @@ const finish = () => {
   
   // 记录练习结果
   store.recordPractice(
-    text.length,
+    text.value.length,
     typedChars.value.filter((char, i) => char === text[i]).length,
     time.value
   )
