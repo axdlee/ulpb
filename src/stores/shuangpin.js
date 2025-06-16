@@ -1,9 +1,110 @@
 import { defineStore } from 'pinia'
 
+// 双拼方案配置
+const SHUANGPIN_SCHEMES = {
+  microsoft: {
+    name: '微软双拼',
+    description: '微软 Windows 自带的双拼方案',
+    author: 'Microsoft',
+    version: '1.0'
+  },
+  xiaohe: {
+    name: '小鹤双拼',
+    description: '小鹤双拼是一种形码双拼方案',
+    author: '郑码',
+    version: '1.0'
+  },
+  ziranma: {
+    name: '自然码',
+    description: '自然码双拼输入法方案',
+    author: '自然码',
+    version: '1.0'
+  },
+  sougou: {
+    name: '搜狗双拼',
+    description: '搜狗输入法的双拼方案',
+    author: '搜狗',
+    version: '1.0'
+  },
+  zhineng: {
+    name: '智能ABC',
+    description: '智能ABC双拼方案',
+    author: '智能ABC',
+    version: '1.0'
+  },
+  jiajia: {
+    name: '加加双拼',
+    description: '加加双拼输入法方案',
+    author: '加加',
+    version: '1.0'
+  },
+  pinyin: {
+    name: '拼音加加',
+    description: '拼音加加双拼方案',
+    author: '拼音加加',
+    version: '1.0'
+  }
+}
+
 export const useShuangpinStore = defineStore('shuangpin', {
   state: () => ({
     // 当前选择的双拼方案
     currentScheme: 'microsoft',
+    // 当前主题
+    currentTheme: 'default',
+    // 主题设置
+    themes: {
+      default: {
+        name: '默认主题',
+        colors: {
+          primary: 'blue',
+          secondary: 'indigo',
+          accent: 'purple',
+          background: 'gray',
+          text: 'gray'
+        }
+      },
+      dark: {
+        name: '暗黑主题',
+        colors: {
+          primary: 'blue',
+          secondary: 'indigo',
+          accent: 'purple',
+          background: 'gray',
+          text: 'white'
+        }
+      },
+      light: {
+        name: '明亮主题',
+        colors: {
+          primary: 'sky',
+          secondary: 'cyan',
+          accent: 'teal',
+          background: 'white',
+          text: 'gray'
+        }
+      },
+      warm: {
+        name: '暖色主题',
+        colors: {
+          primary: 'orange',
+          secondary: 'amber',
+          accent: 'yellow',
+          background: 'white',
+          text: 'gray'
+        }
+      },
+      cool: {
+        name: '冷色主题',
+        colors: {
+          primary: 'emerald',
+          secondary: 'teal',
+          accent: 'cyan',
+          background: 'white',
+          text: 'gray'
+        }
+      }
+    },
     // 当前练习的键位
     currentPracticeKey: null,
     // 学习进度
@@ -33,6 +134,21 @@ export const useShuangpinStore = defineStore('shuangpin', {
   }),
 
   getters: {
+    // 获取所有可用的双拼方案
+    availableSchemes() {
+      return Object.entries(SHUANGPIN_SCHEMES).map(([key, scheme]) => ({
+        value: key,
+        ...scheme
+      }))
+    },
+    // 获取当前方案的详细信息
+    currentSchemeInfo() {
+      return SHUANGPIN_SCHEMES[this.currentScheme]
+    },
+    // 获取当前主题配置
+    currentThemeConfig() {
+      return this.themes[this.currentTheme]
+    },
     accuracy: (state) => {
       if (state.statistics.totalChars === 0) return 0
       return (state.statistics.correctChars / state.statistics.totalChars * 100).toFixed(2)
@@ -159,7 +275,16 @@ export const useShuangpinStore = defineStore('shuangpin', {
 
     // 切换双拼方案
     changeScheme(scheme) {
-      this.currentScheme = scheme
+      if (SHUANGPIN_SCHEMES[scheme]) {
+        this.currentScheme = scheme
+      }
+    },
+
+    // 切换主题
+    changeTheme(theme) {
+      if (this.themes[theme]) {
+        this.currentTheme = theme
+      }
     }
   }
 }) 

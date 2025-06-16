@@ -1,9 +1,63 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+  <div class="min-h-screen" :class="{
+    'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50': store.currentTheme === 'default',
+    'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700': store.currentTheme === 'dark',
+    'bg-gradient-to-br from-sky-50 via-cyan-50 to-teal-50': store.currentTheme === 'light',
+    'bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50': store.currentTheme === 'warm',
+    'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50': store.currentTheme === 'cool'
+  }">
     <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <div class="space-y-6">
+      <div class="space-y-8">
+        <!-- 顶部设置栏 -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-4">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <!-- 方案选择 -->
+            <div class="flex items-center space-x-4">
+              <label class="text-sm font-medium text-gray-700">双拼方案</label>
+              <select
+                v-model="store.currentScheme"
+                class="block w-48 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+              >
+                <option v-for="scheme in store.availableSchemes" :key="scheme.value" :value="scheme.value">
+                  {{ scheme.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- 主题选择 -->
+            <div class="flex items-center space-x-4">
+              <label class="text-sm font-medium text-gray-700">主题</label>
+              <div class="flex items-center space-x-2">
+                <button
+                  v-for="(theme, name) in store.themes"
+                  :key="name"
+                  class="w-8 h-8 rounded-full border-2 transition-all"
+                  :class="{
+                    'border-blue-500 ring-2 ring-blue-500 ring-offset-2': store.currentTheme === name,
+                    'border-transparent hover:border-gray-300': store.currentTheme !== name,
+                    'bg-gradient-to-br from-blue-500 to-purple-500': name === 'default',
+                    'bg-gradient-to-br from-gray-900 to-gray-700': name === 'dark',
+                    'bg-gradient-to-br from-sky-500 to-teal-500': name === 'light',
+                    'bg-gradient-to-br from-orange-500 to-yellow-500': name === 'warm',
+                    'bg-gradient-to-br from-emerald-500 to-cyan-500': name === 'cool'
+                  }"
+                  @click="store.changeTheme(name)"
+                  :title="theme.name"
+                ></button>
+              </div>
+            </div>
+
+            <!-- 方案信息 -->
+            <div class="flex items-center space-x-2 text-sm text-gray-500">
+              <span>作者: {{ store.currentSchemeInfo.author }}</span>
+              <span>|</span>
+              <span>版本: {{ store.currentSchemeInfo.version }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- 学习建议 -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg shadow-lg overflow-hidden">
+        <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
           <div class="px-6 py-8">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -23,32 +77,12 @@
           </div>
         </div>
 
-        <!-- 方案选择 -->
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div class="p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-2xl font-bold text-gray-900">双拼方案</h2>
-                <p class="mt-1 text-sm text-gray-500">选择你想要学习的双拼方案</p>
-              </div>
-              <select
-                v-model="store.currentScheme"
-                class="mt-1 block w-48 rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-              >
-                <option value="microsoft">微软双拼</option>
-                <option value="ziranma">自然码</option>
-                <option value="sougou">搜狗双拼</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <!-- 键位学习区域 -->
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <!-- 键位图 -->
           <div class="lg:col-span-2">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div class="p-6">
+            <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+              <div class="p-8">
                 <div class="flex items-center justify-between mb-6">
                   <h3 class="text-lg font-medium text-gray-900">键位图</h3>
                   <div class="flex items-center space-x-4">
@@ -61,13 +95,13 @@
                   </div>
                 </div>
 
-                <div class="keyboard-layout grid grid-cols-10 gap-1.5">
+                <div class="keyboard-layout grid grid-cols-10 gap-3">
                   <template v-for="key in keyboardLayout" :key="key.key">
                     <div
                       class="key-cell relative aspect-square rounded-lg border-2 transition-all cursor-pointer"
                       :class="{
-                        'border-green-500 bg-green-100 shadow-md': getKeyStatus(key.key) === 'mastered',
-                        'border-blue-500 bg-blue-100 shadow-md': getKeyStatus(key.key) === 'learning',
+                        'border-green-500 bg-green-100 shadow-lg': getKeyStatus(key.key) === 'mastered',
+                        'border-blue-500 bg-blue-100 shadow-lg': getKeyStatus(key.key) === 'learning',
                         'border-gray-300 hover:border-blue-400 hover:bg-blue-50': getKeyStatus(key.key) === 'new',
                         'ring-2 ring-blue-500 ring-offset-2': isKeyHighlighted(key.key)
                       }"
@@ -128,7 +162,7 @@
           </div>
 
           <!-- 键位详情 -->
-          <div class="lg:col-span-1">
+          <div class="lg:col-span-1 space-y-8">
             <div class="bg-white rounded-lg shadow-lg">
               <div class="p-6">
                 <h3 class="text-lg font-medium text-gray-900">
@@ -389,10 +423,10 @@ const isKeyHighlighted = (key) => {
 
 <style scoped>
 .keyboard-layout {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-  padding: 1.5rem;
+  padding: 2rem;
   border-radius: 1rem;
   box-shadow: 
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
@@ -400,9 +434,10 @@ const isKeyHighlighted = (key) => {
 }
 
 .key-cell {
-  min-height: 60px;
+  min-height: 70px;
   background-color: white;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .key-cell:hover {
@@ -412,7 +447,29 @@ const isKeyHighlighted = (key) => {
 
 @media (min-width: 640px) {
   .key-cell {
-    min-height: 80px;
+    min-height: 90px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .key-cell {
+    min-height: 100px;
+  }
+}
+
+/* 暗黑主题适配 */
+:deep([data-theme='dark']) {
+  .keyboard-layout {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  }
+
+  .key-cell {
+    background-color: #374151;
+    border-color: #4B5563;
+  }
+
+  .key-cell:hover {
+    background-color: #4B5563;
   }
 }
 </style> 
