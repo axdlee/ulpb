@@ -1,238 +1,106 @@
 <template>
-  <div class="min-h-screen" :class="{
-    'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50': store.currentTheme === 'default',
-    'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700': store.currentTheme === 'dark',
-    'bg-gradient-to-br from-sky-50 via-cyan-50 to-teal-50': store.currentTheme === 'light',
-    'bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50': store.currentTheme === 'warm',
-    'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50': store.currentTheme === 'cool'
-  }">
+  <div class="min-h-screen bg-gray-50">
+    <!-- 顶部进度条 -->
+    <div class="fixed top-16 left-0 right-0 h-1 bg-gray-200">
+      <div class="h-full bg-blue-500" :style="{ width: `${progress}%` }"></div>
+    </div>
+
     <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <div class="space-y-8">
-        <!-- 顶部设置栏 -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-4">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <!-- 方案选择 -->
-            <div class="flex items-center space-x-4">
-              <label class="text-lg font-medium" :class="{
-                'text-gray-900': store.currentTheme !== 'dark',
-                'text-white': store.currentTheme === 'dark'
-              }">双拼方案</label>
-              <select
-                v-model="store.currentScheme"
-                class="block w-48 rounded-lg border-0 py-2.5 pl-4 pr-10 text-lg font-medium shadow-lg ring-1 ring-inset transition-colors duration-200"
-                :class="{
-                  'bg-white/90 text-gray-900 ring-gray-300 focus:ring-2 focus:ring-blue-500': store.currentTheme !== 'dark',
-                  'bg-gray-800/90 text-white ring-gray-700 focus:ring-2 focus:ring-blue-400': store.currentTheme === 'dark'
-                }"
-              >
-                <option
-                  v-for="scheme in store.availableSchemes"
-                  :key="scheme.value"
-                  :value="scheme.value"
-                  class="py-2"
+      <!-- 练习区域 -->
+      <div class="space-y-8 mt-8">
+        <!-- 当前任务 -->
+        <div class="text-center space-y-4">
+          <h2 class="text-2xl font-medium text-gray-900">{{ currentTask.title }}</h2>
+          <p class="text-gray-600">{{ currentTask.description }}</p>
+        </div>
+
+        <!-- 键位预览 -->
+        <div class="flex justify-center space-x-4 text-3xl font-mono">
+          <div v-for="char in previewChars" 
+               :key="char"
+               class="w-12 h-12 flex items-center justify-center rounded-lg"
+               :class="[
+                 char === currentChar ? 'bg-blue-500 text-white' : 'bg-white text-gray-900',
+                 'shadow-sm'
+               ]">
+            {{ char }}
+          </div>
+        </div>
+
+        <!-- 键盘区域 -->
+        <div class="relative">
+          <!-- 键盘布局 -->
+          <div class="keyboard-layout bg-white rounded-xl shadow-sm p-8">
+            <div class="grid grid-cols-10 gap-1">
+              <template v-for="key in keyboardLayout" :key="key.key">
+                <div
+                  class="key-cell relative aspect-square rounded-lg transition-all"
                   :class="{
-                    'text-gray-900 bg-white': store.currentTheme !== 'dark',
-                    'text-white bg-gray-800': store.currentTheme === 'dark'
+                    'bg-green-100 border border-green-500': getKeyStatus(key.key) === 'mastered',
+                    'bg-blue-100 border border-blue-500': getKeyStatus(key.key) === 'learning',
+                    'bg-gray-50 border border-gray-200': getKeyStatus(key.key) === 'new',
+                    'ring-2 ring-blue-500': isKeyHighlighted(key.key)
                   }"
+                  @click="selectKey(key)"
                 >
-                  {{ scheme.name }}
-                </option>
-              </select>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span class="text-lg font-medium" :class="{
+                      'text-green-700': getKeyStatus(key.key) === 'mastered',
+                      'text-blue-700': getKeyStatus(key.key) === 'learning',
+                      'text-gray-700': getKeyStatus(key.key) === 'new'
+                    }">{{ key.key.toUpperCase() }}</span>
+                    <div class="text-xs mt-1 space-y-0.5">
+                      <div v-if="key.shengmu" class="text-gray-500">{{ key.shengmu }}</div>
+                      <div v-if="key.yunmu" class="text-gray-500">{{ key.yunmu }}</div>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </div>
+          </div>
 
-            <!-- 主题选择 -->
-            <div class="flex items-center space-x-4">
-              <label class="text-sm font-medium text-gray-700">主题</label>
-              <div class="flex items-center space-x-2">
-                <button
-                  v-for="(theme, name) in store.themes"
-                  :key="name"
-                  class="w-8 h-8 rounded-full border-2 transition-all"
-                  :class="{
-                    'border-blue-500 ring-2 ring-blue-500 ring-offset-2': store.currentTheme === name,
-                    'border-transparent hover:border-gray-300': store.currentTheme !== name,
-                    'bg-gradient-to-br from-blue-500 to-purple-500': name === 'default',
-                    'bg-gradient-to-br from-gray-900 to-gray-700': name === 'dark',
-                    'bg-gradient-to-br from-sky-500 to-teal-500': name === 'light',
-                    'bg-gradient-to-br from-orange-500 to-yellow-500': name === 'warm',
-                    'bg-gradient-to-br from-emerald-500 to-cyan-500': name === 'cool'
-                  }"
-                  @click="store.changeTheme(name)"
-                  :title="theme.name"
-                ></button>
-              </div>
-            </div>
-
-            <!-- 方案信息 -->
-            <div class="flex items-center space-x-2 text-sm text-gray-500">
-              <span>作者: {{ store.currentSchemeInfo.author }}</span>
-              <span>|</span>
-              <span>版本: {{ store.currentSchemeInfo.version }}</span>
+          <!-- 手指指法动画 -->
+          <div class="absolute inset-0 pointer-events-none">
+            <div class="relative h-full">
+              <!-- 手指SVG动画 -->
+              <svg class="absolute bottom-0 left-1/2 transform -translate-x-1/2" width="600" height="200" viewBox="0 0 600 200">
+                <!-- 手掌 -->
+                <path class="hand" d="..." fill="none" stroke="#666" stroke-width="2"/>
+                <!-- 手指 -->
+                <g v-for="finger in fingers" :key="finger.id">
+                  <path :class="['finger', { active: finger.active }]" 
+                        :d="finger.path" 
+                        fill="none" 
+                        stroke="#666" 
+                        stroke-width="2"/>
+                </g>
+              </svg>
             </div>
           </div>
         </div>
 
-        <!-- 学习建议 -->
-        <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
-          <div class="px-6 py-8">
-            <div class="flex items-center">
-              <div class="flex-shrink-0">
-                <svg class="h-8 w-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div class="ml-4">
-                <h2 class="text-xl font-semibold text-gray-900">学习建议</h2>
-                <p class="mt-1 text-gray-500">从简单的键位开始，逐步掌握更复杂的组合</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- 右侧工具栏 -->
+        <div class="fixed right-4 top-1/2 transform -translate-y-1/2 space-y-4">
+          <!-- 键盘布局切换 -->
+          <button class="tool-button">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+            </svg>
+          </button>
+          
+          <!-- 指法提示开关 -->
+          <button class="tool-button" :class="{ 'bg-blue-500 text-white': showFingerHints }">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
+            </svg>
+          </button>
 
-        <!-- 键位学习区域 -->
-        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <!-- 键位图 -->
-          <div class="lg:col-span-2">
-            <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
-              <div class="p-8">
-                <div class="flex items-center justify-between mb-6">
-                  <h3 class="text-lg font-medium text-gray-900">键位图</h3>
-                  <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      已掌握
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                      学习中
-                    </span>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                      未学习
-                    </span>
-                  </div>
-                </div>
-
-                <div class="keyboard-layout grid grid-cols-10 gap-1">
-                  <template v-for="key in keyboardLayout" :key="key.key">
-                    <div
-                      class="key-cell relative aspect-square rounded-xl border-2 transition-all cursor-pointer"
-                      :class="{
-                        'border-green-500 bg-green-100/90 shadow-lg': getKeyStatus(key.key) === 'mastered',
-                        'border-blue-500 bg-blue-100/90 shadow-lg': getKeyStatus(key.key) === 'learning',
-                        'border-gray-300 hover:border-blue-400 hover:bg-blue-50/90': getKeyStatus(key.key) === 'new',
-                        'ring-4 ring-blue-500 ring-offset-4': isKeyHighlighted(key.key)
-                      }"
-                      @click="selectKey(key)"
-                    >
-                      <div class="absolute inset-0 flex flex-col items-center justify-center p-2">
-                        <span class="text-2xl font-bold mb-1">{{ key.key.toUpperCase() }}</span>
-                        <div class="text-sm space-y-1">
-                          <div v-if="key.shengmu" class="text-blue-600">{{ key.shengmu }}</div>
-                          <div v-if="key.yunmu" class="text-green-600">{{ key.yunmu }}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-
-                <!-- 键位分类说明 -->
-                <div class="mt-6 grid grid-cols-3 gap-4">
-                  <div class="text-center">
-                    <h4 class="text-sm font-medium text-gray-900">声母键位</h4>
-                    <p class="mt-1 text-2xl font-bold text-blue-600">
-                      {{ keyCategories.initial.length }}
-                    </p>
-                  </div>
-                  <div class="text-center">
-                    <h4 class="text-sm font-medium text-gray-900">韵母键位</h4>
-                    <p class="mt-1 text-2xl font-bold text-green-600">
-                      {{ keyCategories.final.length }}
-                    </p>
-                  </div>
-                  <div class="text-center">
-                    <h4 class="text-sm font-medium text-gray-900">复合键位</h4>
-                    <p class="mt-1 text-2xl font-bold text-purple-600">
-                      {{ keyCategories.both.length }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 键位详情 -->
-          <div class="lg:col-span-1 space-y-8">
-            <div class="bg-white rounded-lg shadow-lg">
-              <div class="p-6">
-                <h3 class="text-lg font-medium text-gray-900">
-                  {{ selectedKey ? `键位详情: ${selectedKey.key}` : '选择键位查看详情' }}
-                </h3>
-                <div v-if="selectedKey" class="mt-4 space-y-4">
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-500">声母</h4>
-                    <p class="mt-1 text-lg font-medium">{{ selectedKey.initial || '无' }}</p>
-                  </div>
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-500">韵母</h4>
-                    <p class="mt-1 text-lg font-medium">{{ selectedKey.final || '无' }}</p>
-                  </div>
-                  <div>
-                    <h4 class="text-sm font-medium text-gray-500">示例</h4>
-                    <div class="mt-2 space-y-2">
-                      <div
-                        v-for="(example, index) in selectedKey.examples"
-                        :key="index"
-                        class="p-2 rounded bg-gray-50"
-                      >
-                        <p class="text-sm text-gray-900">{{ example }}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="mt-6">
-                    <button
-                      @click="startPractice"
-                      class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      练习这个键位
-                    </button>
-                  </div>
-                </div>
-                <div v-else class="mt-4 text-center text-gray-500">
-                  点击键盘上的按键查看详细信息
-                </div>
-              </div>
-            </div>
-
-            <!-- 学习进度 -->
-            <div class="mt-6 bg-white rounded-lg shadow-lg">
-              <div class="p-6">
-                <h3 class="text-lg font-medium text-gray-900">学习进度</h3>
-                <div class="mt-4">
-                  <div class="relative pt-1">
-                    <div class="flex mb-2 items-center justify-between">
-                      <div>
-                        <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
-                          进行中
-                        </span>
-                      </div>
-                      <div class="text-right">
-                        <span class="text-xs font-semibold inline-block text-blue-600">
-                          {{ Math.round((completedKeys.length / totalKeys) * 100) }}%
-                        </span>
-                      </div>
-                    </div>
-                    <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
-                      <div
-                        :style="{ width: `${(completedKeys.length / totalKeys) * 100}%` }"
-                        class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"
-                      ></div>
-                    </div>
-                  </div>
-                  <p class="text-sm text-gray-500">
-                    已掌握 {{ completedKeys.length }} / {{ totalKeys }} 个键位
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- 声音开关 -->
+          <button class="tool-button" :class="{ 'bg-blue-500 text-white': soundEnabled }">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -247,6 +115,9 @@ import { useRouter } from 'vue-router'
 const store = useShuangpinStore()
 const router = useRouter()
 const selectedKey = ref(null)
+const progress = ref(23) // 当前进度
+const showFingerHints = ref(true)
+const soundEnabled = ref(true)
 
 // 键盘布局配置
 const keyboardLayouts = {
@@ -397,62 +268,65 @@ const completedKeys = computed(() => store.learningProgress.completedKeys)
 const isKeyHighlighted = (key) => {
   return selectedKey.value?.key === key
 }
+
+const currentTask = {
+  title: '学习 f 和 j 键位',
+  description: '这两个键位是食指的基准位置,有突起标记'
+}
+
+const previewChars = ['f', 'j', 'f', 'j', 'f']
+const currentChar = ref('f')
+
+// 手指位置数据
+const fingers = [
+  { id: 1, path: '...', active: false }, // 左手小指
+  { id: 2, path: '...', active: false }, // 左手无名指
+  { id: 3, path: '...', active: false }, // 左手中指
+  { id: 4, path: '...', active: true },  // 左手食指 (f)
+  { id: 5, path: '...', active: true },  // 右手食指 (j)
+  { id: 6, path: '...', active: false }, // 右手中指
+  { id: 7, path: '...', active: false }, // 右手无名指
+  { id: 8, path: '...', active: false }  // 右手小指
+]
 </script>
 
 <style scoped>
 .keyboard-layout {
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 255, 0.9) 100%);
-  padding: 3rem;
-  border-radius: 1.5rem;
-  box-shadow: 
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .key-cell {
-  min-height: 90px;
-  background-color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(8px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-height: 60px;
+  user-select: none;
 }
 
-.key-cell:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+.tool-button {
+  @apply w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
 }
 
-@media (min-width: 640px) {
-  .key-cell {
-    min-height: 80px;
-  }
+/* 手指动画 */
+.finger {
+  transition: all 0.3s ease-in-out;
 }
 
-@media (min-width: 1024px) {
-  .key-cell {
-    min-height: 90px;
-  }
+.finger.active {
+  stroke: #3B82F6;
+  stroke-width: 3;
 }
 
-/* 暗黑主题适配 */
-:deep([data-theme='dark']) {
-  .keyboard-layout {
-    background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(17, 24, 39, 0.9) 100%);
-  }
+.hand {
+  transition: transform 0.3s ease-in-out;
+}
 
-  .key-cell {
-    background-color: rgba(55, 65, 81, 0.9);
-    border-color: rgba(75, 85, 99, 0.9);
-  }
+/* 键位预览动画 */
+@keyframes highlight {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
 
-  .key-cell:hover {
-    background-color: rgba(75, 85, 99, 0.9);
-  }
+.preview-char-active {
+  animation: highlight 0.5s ease-in-out;
 }
 </style> 
