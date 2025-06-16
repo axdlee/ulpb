@@ -77,17 +77,13 @@
           <div class="px-6 py-8">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0012 18.75V22"></path>
+                <svg class="h-8 w-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div class="ml-4">
-                <h2 class="text-xl font-bold text-white">学习建议</h2>
-                <div class="mt-2 text-blue-100">
-                  <p v-for="(tip, index) in learningTips" :key="index" class="text-sm">
-                    {{ tip }}
-                  </p>
-                </div>
+                <h2 class="text-xl font-semibold text-gray-900">学习建议</h2>
+                <p class="mt-1 text-gray-500">从简单的键位开始，逐步掌握更复杂的组合</p>
               </div>
             </div>
           </div>
@@ -101,17 +97,20 @@
               <div class="p-8">
                 <div class="flex items-center justify-between mb-6">
                   <h3 class="text-lg font-medium text-gray-900">键位图</h3>
-                  <div class="flex items-center space-x-4">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      已掌握: {{ store.learningProgress.masteredKeys.length }}
+                  <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                      已掌握
                     </span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      学习中: {{ store.learningProgress.completedKeys.length - store.learningProgress.masteredKeys.length }}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                      学习中
+                    </span>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                      未学习
                     </span>
                   </div>
                 </div>
 
-                <div class="keyboard-layout grid grid-cols-10 gap-6">
+                <div class="keyboard-layout grid grid-cols-10 gap-1">
                   <template v-for="key in keyboardLayout" :key="key.key">
                     <div
                       class="key-cell relative aspect-square rounded-xl border-2 transition-all cursor-pointer"
@@ -381,25 +380,6 @@ const keyCategories = computed(() => {
   return categories
 })
 
-// 学习建议
-const learningTips = computed(() => {
-  const tips = []
-  const progress = store.learningProgress
-  
-  if (progress.completedKeys.length === 0) {
-    tips.push('建议从声母键位开始学习')
-    tips.push('先掌握基本的声母组合')
-  } else if (progress.completedKeys.length < 10) {
-    tips.push('继续学习常用韵母键位')
-    tips.push('尝试组合已学习的声母和韵母')
-  } else {
-    tips.push('挑战更复杂的组合')
-    tips.push('多练习实际词组输入')
-  }
-  
-  return tips
-})
-
 // 键位状态
 const getKeyStatus = (key) => {
   const progress = store.learningProgress
@@ -442,21 +422,21 @@ const isKeyHighlighted = (key) => {
 }
 
 .key-cell:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   box-shadow: 
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 @media (min-width: 640px) {
   .key-cell {
-    min-height: 110px;
+    min-height: 80px;
   }
 }
 
 @media (min-width: 1024px) {
   .key-cell {
-    min-height: 130px;
+    min-height: 90px;
   }
 }
 
