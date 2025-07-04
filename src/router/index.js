@@ -6,6 +6,7 @@ import Stats from '../views/Stats.vue'
 import Review from '../views/Review.vue'
 import Achievements from '../views/Achievements.vue'
 import Analytics from '../views/Analytics.vue'
+import Game from '../views/Game.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -44,6 +45,11 @@ const router = createRouter({
       path: '/analytics',
       name: 'analytics',
       component: Analytics
+    },
+    {
+      path: '/game',
+      name: 'game',
+      component: Game
     }
   ]
 })

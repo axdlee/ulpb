@@ -212,6 +212,219 @@ export function generateLearningReport() {
   }
 }
 
+// 导出练习数据
+export function exportPracticeData(format = 'json') {
+  const records = getPracticeRecords()
+  const data = {
+    exportDate: new Date().toISOString(),
+    totalRecords: records.length,
+    records
+  }
+  
+  if (format === 'json') {
+    return JSON.stringify(data, null, 2)
+  } else if (format === 'csv') {
+    const csvHeaders = ['timestamp', 'speed', 'accuracy', 'time', 'charCount', 'lessonId']
+    const rows = records.map(record => [
+      record.timestamp,
+      record.speed,
+      record.accuracy,
+      record.time,
+      record.charCount,
+      record.lessonId || ''
+    ])
+    return [csvHeaders, ...rows].map(row => row.join(',')).join('\n')
+  }
+  
+  return data
+}
+
+// 导入练习数据
+export function importPracticeData(data, format = 'json') {
+  try {
+    let records = []
+    
+    if (format === 'json') {
+      const parsed = JSON.parse(data)
+      records = parsed.records || []
+    } else if (format === 'csv') {
+      const lines = data.split('\n')
+      records = lines.slice(1).map(line => {
+        const values = line.split(',')
+        return {
+          timestamp: parseInt(values[0]),
+          speed: parseFloat(values[1]),
+          accuracy: parseFloat(values[2]),
+          time: parseInt(values[3]),
+          charCount: parseInt(values[4]),
+          lessonId: values[5] || null
+        }
+      }).filter(record => record.timestamp)
+    }
+    
+    const existingRecords = getPracticeRecords()
+    const mergedRecords = [...existingRecords, ...records]
+    localStorage.setItem('practiceRecords', JSON.stringify(mergedRecords))
+    return { success: true, imported: records.length }
+  } catch (error) {
+    return { success: false, error: error.message }
+  }
+}
+
+// 计算学习效率
+export function calculateLearningEfficiency(days = 30) {
+  const records = getPracticeRecords()
+  const now = Date.now()
+  const dayMs = 24 * 60 * 60 * 1000
+  
+  // 最近N天的数据
+  const recentRecords = records.filter(r => now - r.timestamp < days * dayMs)
+  
+  if (recentRecords.length === 0) return { efficiency: 0, trend: 'stable' }
+  
+  // 按周分组
+  const weeklyData = {}
+  recentRecords.forEach(record => {
+    const weekKey = Math.floor((now - record.timestamp) / (7 * dayMs))
+    if (!weeklyData[weekKey]) {
+      weeklyData[weekKey] = { speed: [], accuracy: [], time: 0 }
+    }
+    weeklyData[weekKey].speed.push(record.speed)
+    weeklyData[weekKey].accuracy.push(record.accuracy)
+    weeklyData[weekKey].time += record.time
+  })
+  
+  // 计算每周平均值
+  const weeklyAverages = Object.values(weeklyData).map(week => ({
+    avgSpeed: week.speed.reduce((a, b) => a + b, 0) / week.speed.length,
+    avgAccuracy: week.accuracy.reduce((a, b) => a + b, 0) / week.accuracy.length,
+    totalTime: week.time
+  }))
+  
+  // 计算学习效率 (速度 * 正确率 / 时间)
+  const efficiency = weeklyAverages.map(week => 
+    (week.avgSpeed * week.avgAccuracy / 100) / (week.totalTime / 3600)
+  )
+  
+  // 分析趋势
+  let trend = 'stable'
+  if (efficiency.length > 1) {
+    const recent = efficiency.slice(-2)
+    const change = recent[1] - recent[0]
+    trend = change > 0.1 ? 'improving' : change < -0.1 ? 'declining' : 'stable'
+  }
+  
+  return {
+    efficiency: efficiency.length > 0 ? efficiency[efficiency.length - 1] : 0,
+    trend,
+    weeklyData: weeklyAverages
+  }
+}
+
+// 生成学习目标建议
+export function generateLearningGoals() {
+  const records = getPracticeRecords()
+  const report = generateLearningReport()
+  
+  if (records.length === 0) {
+    return {
+      speed: { current: 0, target: 20, timeframe: '2周' },
+      accuracy: { current: 0, target: 90, timeframe: '1周' },
+      practice: { current: 0, target: 7, timeframe: '1周' }
+    }
+  }
+  
+  const { totalStats, recentStats } = report
+  
+  // 速度目标
+  const speedGoal = {
+    current: recentStats.avgSpeed || totalStats.avgSpeed,
+    target: Math.max((recentStats.avgSpeed || totalStats.avgSpeed) + 5, 30),
+    timeframe: '2周'
+  }
+  
+  // 正确率目标
+  const accuracyGoal = {
+    current: recentStats.avgAccuracy || totalStats.avgAccuracy,
+    target: Math.min((recentStats.avgAccuracy || totalStats.avgAccuracy) + 2, 98),
+    timeframe: '1周'
+  }
+  
+  // 练习频率目标
+  const practiceGoal = {
+    current: recentStats.practices,
+    target: Math.max(recentStats.practices + 1, 7),
+    timeframe: '1周'
+  }
+  
+  return {
+    speed: speedGoal,
+    accuracy: accuracyGoal,
+    practice: practiceGoal
+  }
+}
+
+// 计算成就进度
+export function calculateAchievementProgress() {
+  const records = getPracticeRecords()
+  const achievements = {
+    speedMaster: {
+      name: '速度之王',
+      description: '达到50字/分钟',
+      progress: Math.min((Math.max(...records.map(r => r.speed)) || 0) / 50 * 100, 100)
+    },
+    accuracyExpert: {
+      name: '精准射手',
+      description: '正确率达到98%',
+      progress: Math.min((Math.max(...records.map(r => r.accuracy)) || 0) / 98 * 100, 100)
+    },
+    practiceStreak: {
+      name: '坚持不懈',
+      description: '连续练习30天',
+      progress: Math.min(calculateLearningStreak() / 30 * 100, 100)
+    },
+    totalPractice: {
+      name: '练习达人',
+      description: '累计练习100次',
+      progress: Math.min(records.length / 100 * 100, 100)
+    }
+  }
+  
+  return achievements
+}
+
+// 计算连续练习天数
+export function calculateLearningStreak() {
+  const records = getPracticeRecords()
+  if (records.length === 0) return 0
+  
+  const today = new Date().toDateString()
+  const practiceDate = new Date(records[records.length - 1].timestamp).toDateString()
+  
+  if (practiceDate !== today) {
+    const diffDays = Math.floor((Date.now() - records[records.length - 1].timestamp) / (1000 * 60 * 60 * 24))
+    if (diffDays > 1) return 0
+  }
+  
+  let streak = 1
+  const dayMs = 24 * 60 * 60 * 1000
+  
+  for (let i = records.length - 2; i >= 0; i--) {
+    const currentDate = new Date(records[i + 1].timestamp).toDateString()
+    const prevDate = new Date(records[i].timestamp).toDateString()
+    
+    const diffDays = Math.floor((records[i + 1].timestamp - records[i].timestamp) / dayMs)
+    
+    if (diffDays <= 1) {
+      if (currentDate !== prevDate) streak++
+    } else {
+      break
+    }
+  }
+  
+  return streak
+}
+
 // 计算学习进度
 export function calculateLearningProgress() {
   const records = getPracticeRecords()
