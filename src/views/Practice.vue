@@ -106,7 +106,9 @@
 
           <!-- 手指指法提示 -->
           <div class="absolute inset-x-0 -bottom-20 flex justify-center">
-            <img src="../assets/hands.png" alt="指法提示" class="h-32 opacity-50">
+            <div class="h-32 flex items-center justify-center bg-gray-100 rounded-lg opacity-50">
+              <span class="text-gray-400 text-sm">指法提示</span>
+            </div>
           </div>
         </div>
       </div>
