@@ -23,27 +23,12 @@
           </div>
 
           <div class="flex items-center space-x-4">
-            <select
-              v-model="store.currentScheme"
-              class="block w-48 rounded-lg border-0 py-2 pl-4 pr-10 text-base font-medium shadow-lg ring-1 ring-inset transition-colors duration-200"
-              :class="{
-                'bg-white/90 text-gray-900 ring-gray-300 focus:ring-2 focus:ring-blue-500': store.currentTheme !== 'dark',
-                'bg-gray-800/90 text-white ring-gray-700 focus:ring-2 focus:ring-blue-400': store.currentTheme === 'dark'
-              }"
-            >
-              <option
-                v-for="scheme in store.availableSchemes"
-                :key="scheme.value"
-                :value="scheme.value"
-                class="py-2"
-                :class="{
-                  'text-gray-900 bg-white': store.currentTheme !== 'dark',
-                  'text-white bg-gray-800': store.currentTheme === 'dark'
-                }"
-              >
-                {{ scheme.name }}
-              </option>
-            </select>
+            <div class="text-sm font-medium" :class="{
+              'text-gray-900': store.currentTheme !== 'dark',
+              'text-white': store.currentTheme === 'dark'
+            }">
+              方案: {{ currentSchemeName }}
+            </div>
           </div>
 
           <div class="flex items-center space-x-4">
@@ -92,18 +77,23 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useShuangpinStore } from './stores/shuangpin'
 
 const router = useRouter()
 const store = useShuangpinStore()
 
+const currentSchemeName = computed(() => {
+  return store.currentScheme?.name || '小鹤双拼'
+})
+
 const routes = [
   { path: '/', name: '键位学习' },
-  { path: '/practice', name: '打字练习' },
+  { path: '/practice/1', name: '打字练习' },
   { path: '/game', name: '趣味游戏' },
-  { path: '/stats', name: '学习统计' }
+  { path: '/stats', name: '学习统计' },
+  { path: '/analytics', name: '数据分析' }
 ]
 </script>
 

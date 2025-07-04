@@ -1,14 +1,26 @@
-import { useShuangpinStore } from '../stores/shuangpin'
-
 // 主题管理工具
 export class ThemeManager {
   constructor() {
-    this.store = useShuangpinStore()
+    this.store = null
     this.init()
   }
 
   // 初始化主题
   init() {
+    // 延迟初始化 store 以避免循环依赖
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        const { useShuangpinStore } = require('../stores/shuangpin')
+        this.store = useShuangpinStore()
+        this.loadTheme()
+      }, 0)
+    }
+  }
+
+  // 加载主题
+  loadTheme() {
+    if (!this.store) return
+    
     // 从localStorage加载主题设置
     const savedTheme = localStorage.getItem('theme')
     if (savedTheme && this.store.themes[savedTheme]) {
@@ -50,6 +62,8 @@ export class ThemeManager {
 
   // 获取当前主题
   getCurrentTheme() {
+    if (!this.store) return { colors: { primary: 'blue', secondary: 'indigo', accent: 'purple', background: 'gray', text: 'gray' } }
+    
     if (this.store.currentTheme === 'auto') {
       return this.isSystemDark() ? this.store.themes.dark : this.store.themes.light
     }
@@ -82,6 +96,7 @@ export class ThemeManager {
 
   // 切换主题
   changeTheme(themeName) {
+    if (!this.store) return
     this.store.changeTheme(themeName)
     this.applyTheme()
     localStorage.setItem('theme', themeName)
@@ -89,6 +104,7 @@ export class ThemeManager {
 
   // 获取所有主题
   getThemes() {
+    if (!this.store) return []
     return Object.entries(this.store.themes).map(([key, theme]) => ({
       value: key,
       ...theme
@@ -97,6 +113,7 @@ export class ThemeManager {
 
   // 创建自定义主题
   createCustomTheme(name, colors) {
+    if (!this.store) return null
     const customTheme = {
       name,
       colors,
@@ -109,6 +126,7 @@ export class ThemeManager {
 
   // 删除自定义主题
   deleteCustomTheme(themeKey) {
+    if (!this.store) return
     if (this.store.themes[themeKey] && this.store.themes[themeKey].isCustom) {
       delete this.store.themes[themeKey]
       
@@ -121,6 +139,7 @@ export class ThemeManager {
 
   // 导出主题
   exportTheme(themeKey) {
+    if (!this.store) return null
     const theme = this.store.themes[themeKey]
     if (theme) {
       return JSON.stringify({
@@ -134,6 +153,7 @@ export class ThemeManager {
 
   // 导入主题
   importTheme(themeData) {
+    if (!this.store) return { success: false, error: 'Store not initialized' }
     try {
       const theme = JSON.parse(themeData)
       if (theme.name && theme.colors) {
@@ -158,11 +178,17 @@ export const themeManager = new ThemeManager()
 
 // 主题切换组件辅助函数
 export function useTheme() {
-  const store = useShuangpinStore()
+  let store = null
+  try {
+    const { useShuangpinStore } = require('../stores/shuangpin')
+    store = useShuangpinStore()
+  } catch (error) {
+    console.warn('Failed to load shuangpin store:', error)
+  }
   
   return {
-    currentTheme: store.currentTheme,
-    themes: store.themes,
+    currentTheme: store?.currentTheme || 'default',
+    themes: store?.themes || {},
     changeTheme: (theme) => themeManager.changeTheme(theme),
     getCurrentTheme: () => themeManager.getCurrentTheme(),
     applyTheme: () => themeManager.applyTheme()

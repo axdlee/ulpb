@@ -106,6 +106,7 @@ export const useShuangpinStore = defineStore('shuangpin', {
   state: () => ({
     // 当前选择的双拼方案
     currentScheme: xiaohe,
+    currentSchemeKey: 'xiaohe',
     // 当前主题
     currentTheme: 'default',
     // 主题设置
@@ -206,7 +207,7 @@ export const useShuangpinStore = defineStore('shuangpin', {
     },
     // 获取当前方案的详细信息
     currentSchemeInfo() {
-      return SHUANGPIN_SCHEMES[this.currentScheme]
+      return SHUANGPIN_SCHEMES[this.currentSchemeKey] || SHUANGPIN_SCHEMES.xiaohe
     },
     // 获取当前主题配置
     currentThemeConfig() {
@@ -343,9 +344,12 @@ export const useShuangpinStore = defineStore('shuangpin', {
     },
 
     // 切换双拼方案
-    changeScheme(scheme) {
-      if (SHUANGPIN_SCHEMES[scheme]) {
-        this.currentScheme = scheme
+    changeScheme(schemeKey) {
+      if (SHUANGPIN_SCHEMES[schemeKey]) {
+        this.currentSchemeKey = schemeKey
+        // 这里可以根据需要加载不同的方案数据
+        // 现在暂时只使用小鹤双拼
+        this.currentScheme = xiaohe
       }
     },
 

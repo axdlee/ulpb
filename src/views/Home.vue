@@ -181,7 +181,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useShuangpinStore } from '../stores/shuangpin'
 import { lessons, getLessonProgress } from '../data/lessons'
@@ -197,7 +197,7 @@ const initialLessons = computed(() => lessons.filter(lesson => lesson.type === '
 const finalLessons = computed(() => lessons.filter(lesson => lesson.type === 'final'))
 
 // 最近练习记录
-const recentPractices = computed(() => store.recentPractices)
+const recentPractices = computed(() => store.recentPractices || [])
 
 // 判断是否当前课程
 const isCurrentLesson = (id) => {
@@ -214,6 +214,7 @@ const startLesson = (id) => {
 
 // 格式化时间
 const formatTime = (seconds) => {
+  if (!seconds) return '0小时0分钟'
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   return `${hours}小时${minutes}分钟`
@@ -221,7 +222,21 @@ const formatTime = (seconds) => {
 
 // 格式化日期
 const formatDate = (timestamp) => {
+  if (!timestamp) return ''
   const date = new Date(timestamp)
   return `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`
 }
+
+// 初始化默认数据
+onMounted(() => {
+  // 确保 store 有默认数据
+  if (!store.practiceStats.totalTime) {
+    store.updatePracticeStats({
+      totalTime: 0,
+      totalChars: 0,
+      speed: 0,
+      accuracy: 0
+    })
+  }
+})
 </script> 

@@ -135,7 +135,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useShuangpinStore } from '../stores/shuangpin'
-import { getShuangpinCode, generatePracticeText, commonChars, checkKeyMatch } from '../utils/pinyin'
+import { getShuangpinCode, validateShuangpinInput, generatePracticeText, checkKeyMatch } from '../utils/pinyin'
 import { getLesson } from '../data/lessons'
 import { updateErrorRecord } from '../utils/review'
 
@@ -198,23 +198,16 @@ const isErrorKey = (key) => {
 // 开始练习
 const startPractice = () => {
   // 生成练习文本
-  let chars
-  if (currentLesson.value.type === 'review') {
-    // 复习模式直接使用课程中的汉字
-    chars = currentLesson.value.chars
-  } else if (currentLesson.value.type === 'initial') {
-    // 声母练习模式
-    chars = currentLesson.value.initials.flatMap(initial => commonChars[initial] || [])
+  if (currentLesson.value) {
+    practiceText.value = generatePracticeText(currentLesson.value)
   } else {
-    // 韵母练习模式
-    chars = currentLesson.value.examples.map(ex => ex.char)
+    // 默认练习文本
+    practiceText.value = [
+      { char: '我', shengmu: 'w', yunmu: 'o', pinyin: 'wo' },
+      { char: '是', shengmu: 'u', yunmu: 'i', pinyin: 'shi' },
+      { char: '你', shengmu: 'n', yunmu: 'i', pinyin: 'ni' }
+    ]
   }
-  
-  const text = generatePracticeText(chars, 20)
-  practiceText.value = Array.from(text).map(char => ({
-    char,
-    ...getShuangpinCode(char)
-  }))
 
   isStarted.value = true
   currentIndex.value = 0
