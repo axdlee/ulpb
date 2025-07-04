@@ -5,6 +5,7 @@ import Practice from '../views/Practice.vue'
 import Stats from '../views/Stats.vue'
 import Review from '../views/Review.vue'
 import Achievements from '../views/Achievements.vue'
+import Analytics from '../views/Analytics.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: '/achievements',
       name: 'achievements',
       component: Achievements
+    },
+    {
+      path: '/analytics',
+      name: 'analytics',
+      component: Analytics
     }
   ]
 })
