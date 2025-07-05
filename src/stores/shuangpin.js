@@ -1,371 +1,649 @@
-import { defineStore } from 'pinia'
+/**
+* 双拼方案状态管理
+* 管理双拼输入方案、键位映射、自定义方案等
+*/
 
-// 双拼方案配置
+import { defineStore } from 'pinia'
+import { reactive, computed } from 'vue'
+
+// 完整的双拼方案配置
 const SHUANGPIN_SCHEMES = {
-  microsoft: {
-    name: '微软双拼',
-    description: '微软 Windows 自带的双拼方案',
-    author: 'Microsoft',
-    version: '1.0'
-  },
   xiaohe: {
     name: '小鹤双拼',
-    description: '小鹤双拼是一种形码双拼方案',
-    author: '郑码',
-    version: '1.0'
+    description: '小鹤双拼是一种形码双拼方案，键位布局科学合理',
+    author: '何海峰',
+    version: '2.0',
+    category: 'mainstream',
+    popularity: 95,
+    shengmu: {
+      b: 'b', p: 'p', m: 'm', f: 'f',
+      d: 'd', t: 't', n: 'n', l: 'l',
+      g: 'g', k: 'k', h: 'h',
+      j: 'j', q: 'q', x: 'x',
+      zh: 'v', ch: 'i', sh: 'u', r: 'r',
+      z: 'z', c: 'c', s: 's',
+      y: 'y', w: 'w'
+    },
+    yunmu: {
+      a: 'a', o: 'o', e: 'e', i: 'i', u: 'u', v: 'v',
+      ai: 'd', ei: 'w', ui: 'v',
+      ao: 'c', ou: 'z', iu: 'q',
+      ie: 'x', ue: 't', ve: 't',
+      an: 'j', en: 'f', in: 'n', un: 'p',
+      ang: 'h', eng: 'g', ing: 'k', ong: 's',
+      ia: 'w', iao: 'k', ian: 'm', iang: 'l',
+      iong: 's', ua: 'w', uai: 'y', uan: 'r', uang: 'l',
+      uo: 'o'
+    }
+  },
+  microsoft: {
+    name: '微软双拼',
+    description: '微软 Windows 系统内置的双拼方案',
+    author: 'Microsoft',
+    version: '2.0',
+    category: 'standard',
+    popularity: 85,
+    shengmu: {
+      b: 'b', p: 'p', m: 'm', f: 'f',
+      d: 'd', t: 't', n: 'n', l: 'l',
+      g: 'g', k: 'k', h: 'h',
+      j: 'j', q: 'q', x: 'x',
+      zh: 'v', ch: 'i', sh: 'u', r: 'r',
+      z: 'z', c: 'c', s: 's',
+      y: 'y', w: 'w'
+    },
+    yunmu: {
+      a: 'a', o: 'o', e: 'e', i: 'i', u: 'u', v: 'v',
+      ai: 'l', ei: 'z', ui: 'v',
+      ao: 'k', ou: 'b', iu: 'q',
+      ie: 'x', ue: 't', ve: 't',
+      an: 'j', en: 'f', in: 'n', un: 'y',
+      ang: 'h', eng: 'g', ing: ';', ong: 's',
+      ia: 'w', iao: 'c', ian: 'm', iang: 'd',
+      iong: 's', ua: 'w', uai: 'y', uan: 'r', uang: 'd',
+      uo: 'o'
+    }
   },
   ziranma: {
-    name: '自然码',
-    description: '自然码双拼输入法方案',
-    author: '自然码',
-    version: '1.0'
+    name: '自然码双拼',
+    description: '自然码输入法的双拼方案，历史悠久',
+    author: '周志农',
+    version: '1.0',
+    category: 'classic',
+    popularity: 75,
+    shengmu: {
+      b: 'b', p: 'p', m: 'm', f: 'f',
+      d: 'd', t: 't', n: 'n', l: 'l',
+      g: 'g', k: 'k', h: 'h',
+      j: 'j', q: 'q', x: 'x',
+      zh: 'v', ch: 'i', sh: 'u', r: 'r',
+      z: 'z', c: 'c', s: 's',
+      y: 'y', w: 'w'
+    },
+    yunmu: {
+      a: 'a', o: 'o', e: 'e', i: 'i', u: 'u', v: 'v',
+      ai: 'l', ei: 'z', ui: 'v',
+      ao: 'k', ou: 'b', iu: 'q',
+      ie: 'x', ue: 't', ve: 't',
+      an: 'j', en: 'f', in: 'n', un: 'y',
+      ang: 'h', eng: 'g', ing: ';', ong: 's',
+      ia: 'w', iao: 'c', ian: 'm', iang: 'd',
+      iong: 's', ua: 'w', uai: 'y', uan: 'r', uang: 'd',
+      uo: 'o'
+    }
   },
   sougou: {
     name: '搜狗双拼',
     description: '搜狗输入法的双拼方案',
     author: '搜狗',
-    version: '1.0'
+    version: '1.0',
+    category: 'modern',
+    popularity: 80,
+    shengmu: {
+      b: 'b', p: 'p', m: 'm', f: 'f',
+      d: 'd', t: 't', n: 'n', l: 'l',
+      g: 'g', k: 'k', h: 'h',
+      j: 'j', q: 'q', x: 'x',
+      zh: 'v', ch: 'i', sh: 'u', r: 'r',
+      z: 'z', c: 'c', s: 's',
+      y: 'y', w: 'w'
+    },
+    yunmu: {
+      a: 'a', o: 'o', e: 'e', i: 'i', u: 'u', v: 'v',
+      ai: 'l', ei: 'z', ui: 'v',
+      ao: 'k', ou: 'b', iu: 'q',
+      ie: 'x', ue: 't', ve: 't',
+      an: 'j', en: 'f', in: 'n', un: 'y',
+      ang: 'h', eng: 'g', ing: ';', ong: 's',
+      ia: 'w', iao: 'c', ian: 'm', iang: 'd',
+      iong: 's', ua: 'w', uai: 'y', uan: 'r', uang: 'd',
+      uo: 'o'
+    }
   },
   zhineng: {
-    name: '智能ABC',
-    description: '智能ABC双拼方案',
+    name: '智能ABC双拼',
+    description: '智能ABC输入法的双拼方案',
     author: '智能ABC',
-    version: '1.0'
+    version: '1.0',
+    category: 'classic',
+    popularity: 60,
+    shengmu: {
+      b: 'b', p: 'p', m: 'm', f: 'f',
+      d: 'd', t: 't', n: 'n', l: 'l',
+      g: 'g', k: 'k', h: 'h',
+      j: 'j', q: 'q', x: 'x',
+      zh: 'a', ch: 'e', sh: 'v', r: 'r',
+      z: 'z', c: 'c', s: 's',
+      y: 'y', w: 'w'
+    },
+    yunmu: {
+      a: 'a', o: 'o', e: 'e', i: 'i', u: 'u', v: 'v',
+      ai: 'l', ei: 'q', ui: 'v',
+      ao: 'k', ou: 'b', iu: 'q',
+      ie: 'x', ue: 't', ve: 't',
+      an: 'j', en: 'f', in: 'n', un: 'y',
+      ang: 'h', eng: 'g', ing: ';', ong: 's',
+      ia: 'w', iao: 'c', ian: 'm', iang: 'd',
+      iong: 's', ua: 'w', uai: 'y', uan: 'r', uang: 'd',
+      uo: 'o'
+    }
   },
-  jiajia: {
-    name: '加加双拼',
-    description: '加加双拼输入法方案',
-    author: '加加',
-    version: '1.0'
-  },
-  pinyin: {
-    name: '拼音加加',
-    description: '拼音加加双拼方案',
+  pinyin_jiajia: {
+    name: '拼音加加双拼',
+    description: '拼音加加输入法的双拼方案',
     author: '拼音加加',
-    version: '1.0'
-  }
-}
-
-// 小鹤双拼方案数据
-const xiaohe = {
-  name: '小鹤双拼',
-  shengmu: {
-    b: 'b', p: 'p', m: 'm', f: 'f',
-    d: 'd', t: 't', n: 'n', l: 'l',
-    g: 'g', k: 'k', h: 'h',
-    j: 'j', q: 'q', x: 'x',
-    zh: 'v', ch: 'i', sh: 'u', r: 'r',
-    z: 'z', c: 'c', s: 's', y: 'y', w: 'w'
-  },
-  yunmu: {
-    a: 'a', o: 'o', e: 'e', i: 'i', u: 'u', v: 'v',
-    ai: 'd', ei: 'w', ui: 'v',
-    ao: 'c', ou: 'z', iu: 'q',
-    ie: 'x', ue: 't',
-    an: 'j', en: 'f', in: 'n', un: 'p',
-    ang: 'h', eng: 'g', ing: 'k', ong: 's',
-    ia: 'w', iao: 'k', ian: 'm', iang: 'l',
-    iong: 's', ua: 'w', uai: 'y', uan: 'r', uang: 'l',
-    uo: 'o', ve: 't'
+    version: '1.0',
+    category: 'alternative',
+    popularity: 50,
+    shengmu: {
+      b: 'b', p: 'p', m: 'm', f: 'f',
+      d: 'd', t: 't', n: 'n', l: 'l',
+      g: 'g', k: 'k', h: 'h',
+      j: 'j', q: 'q', x: 'x',
+      zh: 'v', ch: 'u', sh: 'i', r: 'r',
+      z: 'z', c: 'c', s: 's',
+      y: 'y', w: 'w'
+    },
+    yunmu: {
+      a: 'a', o: 'o', e: 'e', i: 'i', u: 'u', v: 'v',
+      ai: 's', ei: 'w', ui: 'v',
+      ao: 'd', ou: 'z', iu: 'r',
+      ie: 'x', ue: 't', ve: 't',
+      an: 'f', en: 'g', in: 'h', un: 'j',
+      ang: 'k', eng: 'l', ing: ';', ong: 'q',
+      ia: 'b', iao: 'n', ian: 'm', iang: 'p',
+      iong: 'q', ua: 'b', uai: 'n', uan: 'm', uang: 'p',
+      uo: 'o'
+    }
   }
 }
 
 // 生成键盘布局数据
 function generateKeyboardLayout(scheme) {
   const layout = [
-    'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p',
-    'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',
-    'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/'
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';'],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/']
   ]
 
-  return layout.map(key => {
-    const data = { key }
-    
-    // 查找这个键位上的声母
-    for (const [shengmu, k] of Object.entries(scheme.shengmu)) {
-      if (k === key) {
-        data.type = 'shengmu'
-        data.shengmu = shengmu
-        break
+  return layout.map((row, rowIndex) => ({
+    row: rowIndex + 1,
+    keys: row.map(key => {
+      const keyData = { key, display: key === ';' ? '分号' : key.toUpperCase() }
+      
+      // 查找这个键位上的声母
+      for (const [shengmu, k] of Object.entries(scheme.shengmu)) {
+        if (k === key) {
+          keyData.type = 'shengmu'
+          keyData.shengmu = shengmu
+          keyData.display = key.toUpperCase()
+          keyData.labels = keyData.labels || []
+          keyData.labels.push({ type: 'shengmu', value: shengmu })
+          break
+        }
       }
-    }
 
-    // 查找这个键位上的韵母
-    for (const [yunmu, k] of Object.entries(scheme.yunmu)) {
-      if (k === key) {
-        data.type = data.type === 'shengmu' ? 'both' : 'yunmu'
-        data.yunmu = yunmu
+      // 查找这个键位上的韵母
+      for (const [yunmu, k] of Object.entries(scheme.yunmu)) {
+        if (k === key) {
+          keyData.type = keyData.type === 'shengmu' ? 'both' : 'yunmu'
+          keyData.yunmu = yunmu
+          keyData.labels = keyData.labels || []
+          keyData.labels.push({ type: 'yunmu', value: yunmu })
+        }
       }
-    }
 
-    return data
-  })
+      // 设置键位类型样式
+      if (!keyData.type) {
+        keyData.type = 'normal'
+      }
+
+      return keyData
+    })
+  }))
+}
+
+// 验证双拼方案的完整性
+function validateScheme(scheme) {
+  const errors = []
+  
+  // 检查必需字段
+  if (!scheme.name) errors.push('缺少方案名称')
+  if (!scheme.shengmu) errors.push('缺少声母映射')
+  if (!scheme.yunmu) errors.push('缺少韵母映射')
+  
+  // 检查声母完整性
+  const requiredShengmu = ['b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'j', 'q', 'x', 'zh', 'ch', 'sh', 'r', 'z', 'c', 's', 'y', 'w']
+  const missingShengmu = requiredShengmu.filter(sm => !scheme.shengmu[sm])
+  if (missingShengmu.length > 0) {
+    errors.push(`缺少声母: ${missingShengmu.join(', ')}`)
+  }
+  
+  // 检查韵母完整性
+  const requiredYunmu = ['a', 'o', 'e', 'i', 'u', 'v', 'ai', 'ei', 'ui', 'ao', 'ou', 'iu', 'ie', 'ue', 've', 'an', 'en', 'in', 'un', 'ang', 'eng', 'ing', 'ong']
+  const missingYunmu = requiredYunmu.filter(ym => !scheme.yunmu[ym])
+  if (missingYunmu.length > 0) {
+    errors.push(`缺少韵母: ${missingYunmu.join(', ')}`)
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
 }
 
 export const useShuangpinStore = defineStore('shuangpin', {
   state: () => ({
     // 当前选择的双拼方案
-    currentScheme: xiaohe,
     currentSchemeKey: 'xiaohe',
-    // 当前主题
-    currentTheme: 'default',
-    // 主题设置
-    themes: {
-      default: {
-        name: '默认主题',
-        colors: {
-          primary: 'blue',
-          secondary: 'indigo',
-          accent: 'purple',
-          background: 'gray',
-          text: 'gray'
-        }
-      },
-      dark: {
-        name: '暗黑主题',
-        colors: {
-          primary: 'blue',
-          secondary: 'indigo',
-          accent: 'purple',
-          background: 'gray',
-          text: 'white'
-        }
-      },
-      light: {
-        name: '明亮主题',
-        colors: {
-          primary: 'sky',
-          secondary: 'cyan',
-          accent: 'teal',
-          background: 'white',
-          text: 'gray'
-        }
-      },
-      warm: {
-        name: '暖色主题',
-        colors: {
-          primary: 'orange',
-          secondary: 'amber',
-          accent: 'yellow',
-          background: 'white',
-          text: 'gray'
-        }
-      },
-      cool: {
-        name: '冷色主题',
-        colors: {
-          primary: 'emerald',
-          secondary: 'teal',
-          accent: 'cyan',
-          background: 'white',
-          text: 'gray'
-        }
-      }
-    },
-    // 当前练习的键位
-    currentPracticeKey: null,
-    // 学习进度
-    learningProgress: {
-      completedKeys: [],
-      masteredKeys: [],
-      practiceHistory: {},
-      lastPracticeDate: null
-    },
-    // 练习统计
-    statistics: {
-      totalChars: 0,
-      correctChars: 0,
-      totalTime: 0,
-      practiceHistory: [],
-      errorPatterns: {}
-    },
-    // 游戏分数
-    gameScores: [],
-    // 用户设置
-    settings: {
-      soundEnabled: true,
-      showPinyin: true,
-      showHint: true,
-      difficulty: 'normal'
-    },
-    lessonProgress: {},
-    practiceStats: {
-      totalTime: 0,
-      totalChars: 0,
-      accuracy: 0,
-      speed: 0
-    }
+    
+    // 自定义方案存储
+    customSchemes: {},
+    
+    // 方案学习进度
+    schemeProgress: {},
+    
+    // 键位熟练度
+    keyMastery: {},
+    
+    // 方案比较数据
+    comparisonData: null
   }),
 
   getters: {
+    // 获取当前双拼方案
+    currentScheme() {
+      return SHUANGPIN_SCHEMES[this.currentSchemeKey] || this.customSchemes[this.currentSchemeKey] || SHUANGPIN_SCHEMES.xiaohe
+    },
+    
     // 获取所有可用的双拼方案
     availableSchemes() {
-      return Object.entries(SHUANGPIN_SCHEMES).map(([key, scheme]) => ({
-        value: key,
-        ...scheme
+      const builtinSchemes = Object.entries(SHUANGPIN_SCHEMES).map(([key, scheme]) => ({
+        key,
+        ...scheme,
+        isBuiltin: true
       }))
+      
+      const customSchemes = Object.entries(this.customSchemes).map(([key, scheme]) => ({
+        key,
+        ...scheme,
+        isBuiltin: false
+      }))
+      
+      return [...builtinSchemes, ...customSchemes].sort((a, b) => b.popularity - a.popularity)
     },
-    // 获取当前方案的详细信息
+    
+    // 获取方案分类
+    schemesByCategory() {
+      const schemes = this.availableSchemes
+      const categories = {
+        mainstream: { name: '主流方案', schemes: [] },
+        standard: { name: '标准方案', schemes: [] },
+        classic: { name: '经典方案', schemes: [] },
+        modern: { name: '现代方案', schemes: [] },
+        alternative: { name: '其他方案', schemes: [] },
+        custom: { name: '自定义方案', schemes: [] }
+      }
+      
+      schemes.forEach(scheme => {
+        const category = scheme.isBuiltin ? scheme.category : 'custom'
+        if (categories[category]) {
+          categories[category].schemes.push(scheme)
+        }
+      })
+      
+      return categories
+    },
+    
+    // 获取当前方案的键盘布局
+    currentKeyboardLayout() {
+      return generateKeyboardLayout(this.currentScheme)
+    },
+    
+    // 获取当前方案信息
     currentSchemeInfo() {
-      return SHUANGPIN_SCHEMES[this.currentSchemeKey] || SHUANGPIN_SCHEMES.xiaohe
+      const scheme = this.currentScheme
+      const validation = validateScheme(scheme)
+      
+      return {
+        ...scheme,
+        isValid: validation.isValid,
+        errors: validation.errors,
+        totalKeys: Object.keys(scheme.shengmu).length + Object.keys(scheme.yunmu).length,
+        keyboardLayout: this.currentKeyboardLayout
+      }
     },
-    // 获取当前主题配置
-    currentThemeConfig() {
-      return this.themes[this.currentTheme]
+    
+    // 获取键位映射统计
+    keyMappingStats() {
+      const scheme = this.currentScheme
+      const stats = {
+        shengmuCount: Object.keys(scheme.shengmu).length,
+        yunmuCount: Object.keys(scheme.yunmu).length,
+        conflictKeys: [],
+        unusedKeys: []
+      }
+      
+      // 检查键位冲突
+      const usedKeys = new Set()
+      const conflictKeys = new Set()
+      
+      Object.values(scheme.shengmu).forEach(key => {
+        if (usedKeys.has(key)) {
+          conflictKeys.add(key)
+        }
+        usedKeys.add(key)
+      })
+      
+      Object.values(scheme.yunmu).forEach(key => {
+        if (usedKeys.has(key)) {
+          conflictKeys.add(key)
+        }
+        usedKeys.add(key)
+      })
+      
+      stats.conflictKeys = Array.from(conflictKeys)
+      
+      // 检查未使用的键位
+      const allKeys = 'abcdefghijklmnopqrstuvwxyz;'.split('')
+      stats.unusedKeys = allKeys.filter(key => !usedKeys.has(key))
+      
+      return stats
     },
-    accuracy: (state) => {
-      if (state.statistics.totalChars === 0) return 0
-      return (state.statistics.correctChars / state.statistics.totalChars * 100).toFixed(2)
-    },
-    averageSpeed: (state) => {
-      if (state.statistics.totalTime === 0) return 0
-      return ((state.statistics.correctChars / state.statistics.totalTime) * 60).toFixed(2)
-    },
-    learningStreak: (state) => {
-      if (!state.learningProgress.lastPracticeDate) return 0
-      const today = new Date()
-      const lastPractice = new Date(state.learningProgress.lastPracticeDate)
-      const diffDays = Math.floor((today - lastPractice) / (1000 * 60 * 60 * 24))
-      return diffDays <= 1 ? state.learningProgress.streak || 1 : 0
-    },
-    masteryPercentage: (state) => {
-      return (state.learningProgress.masteredKeys.length / 26 * 100).toFixed(1)
-    },
-    commonErrors: (state) => {
-      return Object.entries(state.statistics.errorPatterns)
-        .sort(([, a], [, b]) => b.count - a.count)
+    
+    // 获取学习建议
+    learningRecommendations() {
+      const progress = this.schemeProgress[this.currentSchemeKey]
+      const mastery = this.keyMastery
+      
+      if (!progress) {
+        return {
+          phase: 'beginner',
+          recommendations: [
+            '建议先学习常用声母：b、p、m、f、d、t、n、l',
+            '重点掌握基础韵母：a、o、e、i、u',
+            '每天练习15-20分钟，保持连续性'
+          ]
+        }
+      }
+      
+      const weakKeys = Object.entries(mastery)
+        .filter(([, level]) => level < 0.8)
+        .map(([key]) => key)
         .slice(0, 5)
-        .map(([key, value]) => ({
-          pattern: key,
-          count: value.count,
-          examples: value.examples.slice(0, 3)
-        }))
-    },
-    getCurrentSchemeLayout: (state) => {
-      return generateKeyboardLayout(state.currentScheme)
-    },
-    getLessonProgress: (state) => (lessonId) => {
-      return state.lessonProgress[lessonId] || 0
+      
+      return {
+        phase: progress.masteredKeys?.length > 15 ? 'advanced' : 'intermediate',
+        recommendations: [
+          weakKeys.length > 0 ? `重点练习薄弱键位: ${weakKeys.join(', ')}` : '继续巩固已掌握的键位',
+          '增加词组和句子练习',
+          '尝试提高打字速度和准确率'
+        ]
+      }
     }
   },
 
   actions: {
-    // 设置当前练习的键位
-    setCurrentPracticeKey(key) {
-      this.currentPracticeKey = key
-    },
-
-    // 更新学习进度
-    updateLearningProgress(key, mastered = false) {
-      const today = new Date().toISOString().split('T')[0]
-      
-      if (!this.learningProgress.completedKeys.includes(key)) {
-        this.learningProgress.completedKeys.push(key)
-      }
-      
-      if (mastered && !this.learningProgress.masteredKeys.includes(key)) {
-        this.learningProgress.masteredKeys.push(key)
-      }
-
-      // 更新练习历史
-      if (!this.learningProgress.practiceHistory[today]) {
-        this.learningProgress.practiceHistory[today] = {
-          keys: new Set(),
-          totalTime: 0
-        }
-      }
-      this.learningProgress.practiceHistory[today].keys.add(key)
-
-      // 更新练习日期和连续练习天数
-      if (this.learningProgress.lastPracticeDate !== today) {
-        const lastDate = this.learningProgress.lastPracticeDate
-        if (lastDate) {
-          const diffDays = Math.floor(
-            (new Date(today) - new Date(lastDate)) / (1000 * 60 * 60 * 24)
-          )
-          if (diffDays === 1) {
-            this.learningProgress.streak = (this.learningProgress.streak || 0) + 1
-          } else if (diffDays > 1) {
-            this.learningProgress.streak = 1
-          }
-        } else {
-          this.learningProgress.streak = 1
-        }
-        this.learningProgress.lastPracticeDate = today
-      }
-    },
-
-    // 记录练习结果
-    recordPractice(chars, correct, time, errors = []) {
-      this.statistics.totalChars += chars
-      this.statistics.correctChars += correct
-      this.statistics.totalTime += time
-
-      // 记录错误模式
-      errors.forEach(error => {
-        const pattern = `${error.expected}->${error.actual}`
-        if (!this.statistics.errorPatterns[pattern]) {
-          this.statistics.errorPatterns[pattern] = {
-            count: 0,
-            examples: []
-          }
-        }
-        this.statistics.errorPatterns[pattern].count += error.count
-        if (error.context) {
-          this.statistics.errorPatterns[pattern].examples.push(error.context)
-        }
-      })
-
-      this.statistics.practiceHistory.push({
-        timestamp: new Date().toISOString(),
-        chars,
-        correct,
-        time,
-        speed: (correct / time * 60).toFixed(2),
-        accuracy: (correct / chars * 100).toFixed(2)
-      })
-    },
-
-    // 记录游戏分数
-    recordGameScore(score, gameType) {
-      this.gameScores.push({
-        score,
-        gameType,
-        timestamp: new Date().toISOString()
-      })
-    },
-
-    // 更新用户设置
-    updateSettings(settings) {
-      this.settings = {
-        ...this.settings,
-        ...settings
-      }
-    },
-
     // 切换双拼方案
     changeScheme(schemeKey) {
-      if (SHUANGPIN_SCHEMES[schemeKey]) {
+      if (SHUANGPIN_SCHEMES[schemeKey] || this.customSchemes[schemeKey]) {
         this.currentSchemeKey = schemeKey
-        // 这里可以根据需要加载不同的方案数据
-        // 现在暂时只使用小鹤双拼
-        this.currentScheme = xiaohe
+        
+        // 初始化方案进度
+        if (!this.schemeProgress[schemeKey]) {
+          this.schemeProgress[schemeKey] = {
+            startDate: Date.now(),
+            practiceTime: 0,
+            masteredKeys: [],
+            totalPractices: 0
+          }
+        }
+        
+        return true
+      }
+      return false
+    },
+    
+    // 创建自定义方案
+    createCustomScheme(schemeData) {
+      const validation = validateScheme(schemeData)
+      if (!validation.isValid) {
+        return { success: false, errors: validation.errors }
+      }
+      
+      const schemeKey = `custom_${Date.now()}`
+      this.customSchemes[schemeKey] = {
+        ...schemeData,
+        category: 'custom',
+        popularity: 0,
+        createdAt: Date.now()
+      }
+      
+      return { success: true, schemeKey }
+    },
+    
+    // 更新自定义方案
+    updateCustomScheme(schemeKey, updates) {
+      if (this.customSchemes[schemeKey]) {
+        const updatedScheme = { ...this.customSchemes[schemeKey], ...updates }
+        const validation = validateScheme(updatedScheme)
+        
+        if (validation.isValid) {
+          this.customSchemes[schemeKey] = updatedScheme
+          return { success: true }
+        } else {
+          return { success: false, errors: validation.errors }
+        }
+      }
+      
+      return { success: false, errors: ['方案不存在'] }
+    },
+    
+    // 删除自定义方案
+    deleteCustomScheme(schemeKey) {
+      if (this.customSchemes[schemeKey]) {
+        delete this.customSchemes[schemeKey]
+        
+        // 如果删除的是当前方案，切换到默认方案
+        if (this.currentSchemeKey === schemeKey) {
+          this.currentSchemeKey = 'xiaohe'
+        }
+        
+        return true
+      }
+      return false
+    },
+    
+    // 导出方案
+    exportScheme(schemeKey) {
+      const scheme = SHUANGPIN_SCHEMES[schemeKey] || this.customSchemes[schemeKey]
+      if (scheme) {
+        return {
+          ...scheme,
+          exportDate: new Date().toISOString(),
+          version: '2.0'
+        }
+      }
+      return null
+    },
+    
+    // 导入方案
+    importScheme(schemeData) {
+      try {
+        const validation = validateScheme(schemeData)
+        if (!validation.isValid) {
+          return { success: false, errors: validation.errors }
+        }
+        
+        const result = this.createCustomScheme(schemeData)
+        if (result.success) {
+          return { success: true, message: '方案导入成功', schemeKey: result.schemeKey }
+        } else {
+          return result
+        }
+      } catch (error) {
+        return { success: false, errors: ['导入数据格式错误'] }
       }
     },
-
-    // 切换主题
-    changeTheme(theme) {
-      if (this.themes[theme]) {
-        this.currentTheme = theme
+    
+    // 更新键位熟练度
+    updateKeyMastery(key, accuracy, speed) {
+      if (!this.keyMastery[key]) {
+        this.keyMastery[key] = {
+          accuracy: 0,
+          speed: 0,
+          practiceCount: 0,
+          lastPractice: 0
+        }
+      }
+      
+      const mastery = this.keyMastery[key]
+      mastery.practiceCount += 1
+      mastery.accuracy = (mastery.accuracy * (mastery.practiceCount - 1) + accuracy) / mastery.practiceCount
+      mastery.speed = (mastery.speed * (mastery.practiceCount - 1) + speed) / mastery.practiceCount
+      mastery.lastPractice = Date.now()
+      
+      // 计算综合熟练度 (0-1)
+      const level = (mastery.accuracy * 0.7 + Math.min(mastery.speed / 100, 1) * 0.3)
+      mastery.level = level
+      
+      return level
+    },
+    
+    // 获取键位对应的拼音元素
+    getKeyMapping(key) {
+      const scheme = this.currentScheme
+      const result = { key, mappings: [] }
+      
+      // 查找声母
+      for (const [shengmu, k] of Object.entries(scheme.shengmu)) {
+        if (k === key) {
+          result.mappings.push({ type: 'shengmu', value: shengmu })
+        }
+      }
+      
+      // 查找韵母
+      for (const [yunmu, k] of Object.entries(scheme.yunmu)) {
+        if (k === key) {
+          result.mappings.push({ type: 'yunmu', value: yunmu })
+        }
+      }
+      
+      return result
+    },
+    
+    // 比较两个方案
+    compareSchemes(schemeKey1, schemeKey2) {
+      const scheme1 = SHUANGPIN_SCHEMES[schemeKey1] || this.customSchemes[schemeKey1]
+      const scheme2 = SHUANGPIN_SCHEMES[schemeKey2] || this.customSchemes[schemeKey2]
+      
+      if (!scheme1 || !scheme2) {
+        return null
+      }
+      
+      const comparison = {
+        schemes: [scheme1, scheme2],
+        differences: {
+          shengmu: [],
+          yunmu: []
+        },
+        similarities: {
+          shengmu: [],
+          yunmu: []
+        }
+      }
+      
+      // 比较声母
+      const allShengmu = new Set([...Object.keys(scheme1.shengmu), ...Object.keys(scheme2.shengmu)])
+      allShengmu.forEach(sm => {
+        const key1 = scheme1.shengmu[sm]
+        const key2 = scheme2.shengmu[sm]
+        
+        if (key1 === key2) {
+          comparison.similarities.shengmu.push({ element: sm, key: key1 })
+        } else {
+          comparison.differences.shengmu.push({ element: sm, keys: [key1, key2] })
+        }
+      })
+      
+      // 比较韵母
+      const allYunmu = new Set([...Object.keys(scheme1.yunmu), ...Object.keys(scheme2.yunmu)])
+      allYunmu.forEach(ym => {
+        const key1 = scheme1.yunmu[ym]
+        const key2 = scheme2.yunmu[ym]
+        
+        if (key1 === key2) {
+          comparison.similarities.yunmu.push({ element: ym, key: key1 })
+        } else {
+          comparison.differences.yunmu.push({ element: ym, keys: [key1, key2] })
+        }
+      })
+      
+      this.comparisonData = comparison
+      return comparison
+    },
+    
+    // 清除比较数据
+    clearComparison() {
+      this.comparisonData = null
+    },
+    
+    // 重置方案学习数据
+    resetSchemeProgress(schemeKey) {
+      if (this.schemeProgress[schemeKey]) {
+        this.schemeProgress[schemeKey] = {
+          startDate: Date.now(),
+          practiceTime: 0,
+          masteredKeys: [],
+          totalPractices: 0
+        }
       }
     },
-
-    updateLessonProgress(lessonId, progress) {
-      this.lessonProgress[lessonId] = progress
-    },
-
-    updatePracticeStats(stats) {
-      Object.assign(this.practiceStats, stats)
+    
+    // 更新方案学习进度
+    updateSchemeProgress(practiceData) {
+      const schemeKey = this.currentSchemeKey
+      if (!this.schemeProgress[schemeKey]) {
+        this.schemeProgress[schemeKey] = {
+          startDate: Date.now(),
+          practiceTime: 0,
+          masteredKeys: [],
+          totalPractices: 0
+        }
+      }
+      
+      const progress = this.schemeProgress[schemeKey]
+      progress.practiceTime += practiceData.duration || 0
+      progress.totalPractices += 1
+      
+      // 更新掌握的键位
+      if (practiceData.masteredKeys) {
+        practiceData.masteredKeys.forEach(key => {
+          if (!progress.masteredKeys.includes(key)) {
+            progress.masteredKeys.push(key)
+          }
+        })
+      }
     }
   }
-}) 
+})

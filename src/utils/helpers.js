@@ -72,8 +72,8 @@ export function getRelativeTime(timestamp) {
   }
 }
 
-export function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2)
+export function generateId(prefix = 'id') {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 9)}`
 }
 
 export function validateEmail(email) {

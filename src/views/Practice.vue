@@ -1,348 +1,877 @@
+<!-- Practice 打字练习 - 现代化练习界面 -->
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- 练习区域 -->
-    <div class="max-w-4xl mx-auto px-4 py-8">
-      <!-- 练习信息 -->
-      <div class="mb-8 flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-medium text-gray-900">{{ currentLesson.title }}</h1>
-          <p class="mt-1 text-sm text-gray-500">
-            {{ isStarted ? '正在练习...' : '按空格开始练习' }}
-          </p>
-        </div>
-        <div class="flex items-center space-x-8 text-sm">
-          <div>
-            <div class="text-gray-500">速度</div>
-            <div class="text-xl font-medium text-gray-900">{{ speed }} 字/分</div>
+  <div class="practice">
+    <!-- 练习头部信息 -->
+    <div class="practice-header">
+      <div class="container">
+        <div class="header-content">
+          <!-- 练习信息 -->
+          <div class="practice-info">
+            <div class="lesson-breadcrumb">
+              <router-link to="/practice" class="breadcrumb-link">练习中心</router-link>
+              <span class="breadcrumb-separator">/</span>
+              <span class="breadcrumb-current">{{ currentLesson?.title || '自由练习' }}</span>
+            </div>
+            <h1 class="practice-title">{{ getPracticeTitle() }}</h1>
+            <p class="practice-description">{{ getPracticeDescription() }}</p>
           </div>
-          <div>
-            <div class="text-gray-500">正确率</div>
-            <div class="text-xl font-medium text-gray-900">{{ accuracy }}%</div>
-          </div>
-          <div>
-            <div class="text-gray-500">用时</div>
-            <div class="text-xl font-medium text-gray-900">{{ formatTime(time) }}</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- 练习内容 -->
-      <div class="bg-white rounded-lg shadow-sm p-8">
-        <!-- 提示字符 -->
-        <div class="mb-8">
-          <div class="flex items-center justify-center space-x-8">
-            <div class="text-center">
-              <div class="text-6xl font-medium" :class="{
-                'text-gray-300': !isStarted,
-                'text-gray-900': isStarted
-              }">{{ currentChar }}</div>
-              <div class="mt-2 text-sm text-gray-500">当前汉字</div>
-            </div>
-            <div class="text-center" v-if="currentPinyin">
-              <div class="text-3xl font-medium text-blue-600">
-                {{ currentPinyin.shengmu.toUpperCase() }}
-              </div>
-              <div class="mt-1 text-sm text-gray-500">声母</div>
-            </div>
-            <div class="text-center" v-if="currentPinyin">
-              <div class="text-3xl font-medium text-green-600">
-                {{ currentPinyin.yunmu.toUpperCase() }}
-              </div>
-              <div class="mt-1 text-sm text-gray-500">韵母</div>
-            </div>
-          </div>
-          
-          <!-- 练习进度 -->
-          <div class="mt-6">
-            <div class="flex items-center justify-between mb-2">
-              <div class="text-sm text-gray-500">练习进度</div>
-              <div class="text-sm text-gray-500">
-                {{ currentIndex + 1 }}/{{ practiceText.length }}
+          <!-- 实时统计 -->
+          <div class="stats-panel">
+            <div class="stat-item">
+              <div class="stat-icon">⚡</div>
+              <div class="stat-content">
+                <div class="stat-value">{{ practiceStore.currentStats.speed || 0 }}</div>
+                <div class="stat-label">字/分钟</div>
               </div>
             </div>
-            <div class="h-2 bg-gray-100 rounded-full">
-              <div 
-                class="h-2 bg-blue-500 rounded-full transition-all duration-300"
-                :style="{ width: `${(currentIndex / practiceText.length) * 100}%` }"
-              ></div>
+            <div class="stat-item">
+              <div class="stat-icon">🎯</div>
+              <div class="stat-content">
+                <div class="stat-value">{{ practiceStore.currentStats.accuracy || 100 }}%</div>
+                <div class="stat-label">准确率</div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">⏱️</div>
+              <div class="stat-content">
+                <div class="stat-value">{{ formatTime(practiceStore.currentStats.duration || 0) }}</div>
+                <div class="stat-label">用时</div>
+              </div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">📊</div>
+              <div class="stat-content">
+                <div class="stat-value">{{ practiceStore.currentStats.progress || 0 }}%</div>
+                <div class="stat-label">完成度</div>
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- 键盘区域 -->
-        <div class="relative">
-          <div class="keyboard-layout">
-            <div class="grid grid-cols-10 gap-x-1 gap-y-1">
-              <template v-for="key in keyboardLayout" :key="key.key">
-                <div
-                  class="key-cell"
-                  :class="[
-                    'relative aspect-square rounded transition-all',
-                    {
-                      'bg-blue-50 border border-blue-200': key.type === 'shengmu',
-                      'bg-green-50 border border-green-200': key.type === 'yunmu',
-                      'bg-gray-50 border border-gray-200': !key.type,
-                      'ring-2 ring-blue-500 ring-offset-2': isTargetKey(key),
-                      'bg-red-50 border-red-200': isErrorKey(key)
-                    }
-                  ]"
-                >
-                  <div class="absolute inset-0 flex flex-col items-center justify-center p-1">
-                    <span class="text-base font-medium" :class="{
-                      'text-blue-700': key.type === 'shengmu',
-                      'text-green-700': key.type === 'yunmu',
-                      'text-gray-700': !key.type,
-                      'text-red-700': isErrorKey(key)
-                    }">{{ key.key.toUpperCase() }}</span>
-                    <div class="text-xs space-y-0.5 text-center">
-                      <div v-if="key.shengmu" class="text-blue-600">{{ key.shengmu }}</div>
-                      <div v-if="key.yunmu" class="text-green-600">{{ key.yunmu }}</div>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <!-- 手指指法提示 -->
-          <div class="absolute inset-x-0 -bottom-20 flex justify-center">
-            <div class="h-32 flex items-center justify-center bg-gray-100 rounded-lg opacity-50">
-              <span class="text-gray-400 text-sm">指法提示</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 练习控制 -->
-      <div class="mt-8 flex justify-between items-center">
-        <button 
-          class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
-          @click="quitPractice"
-        >
-          退出练习
-        </button>
-        <button 
-          v-if="!isStarted"
-          class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          @click="startPractice"
-        >
-          开始练习
-        </button>
       </div>
     </div>
+
+    <!-- 主练习区域 -->
+    <div class="practice-main">
+      <div class="container">
+        <div class="practice-content">
+          <!-- 练习模式选择 -->
+          <Card class="mode-selector-card" v-if="!practiceStore.isActive">
+            <template #header>
+              <h2 class="card-title">选择练习模式</h2>
+            </template>
+            
+            <div class="mode-grid">
+              <div 
+                v-for="mode in practiceMode" 
+                :key="mode.id"
+                class="mode-card"
+                :class="{ 'mode-card--selected': selectedMode === mode.id }"
+                @click="selectMode(mode.id)"
+              >
+                <div class="mode-icon">{{ mode.icon }}</div>
+                <div class="mode-content">
+                  <h3 class="mode-title">{{ mode.title }}</h3>
+                  <p class="mode-description">{{ mode.description }}</p>
+                  <div class="mode-features">
+                    <span 
+                      v-for="feature in mode.features"
+                      :key="feature"
+                      class="mode-feature"
+                    >
+                      {{ feature }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mode-actions">
+              <Button
+                variant="solid"
+                size="lg"
+                @click="startPractice"
+                :disabled="!selectedMode"
+                class="start-button"
+              >
+                <span class="start-icon">🚀</span>
+                开始练习
+              </Button>
+            </div>
+          </Card>
+
+          <!-- 练习进行中界面 -->
+          <div class="practice-active" v-else>
+            <!-- 当前练习进度 -->
+            <Card class="progress-card">
+              <div class="progress-content">
+                <div class="progress-info">
+                  <div class="progress-text">
+                    <span class="progress-current">{{ practiceStore.currentIndex + 1 }}</span>
+                    <span class="progress-separator">/</span>
+                    <span class="progress-total">{{ practiceStore.totalChars }}</span>
+                  </div>
+                  <div class="progress-percentage">{{ practiceStore.currentStats.progress }}%</div>
+                </div>
+                <div class="progress-bar">
+                  <div 
+                    class="progress-fill"
+                    :style="{ width: `${practiceStore.currentStats.progress}%` }"
+                  ></div>
+                </div>
+              </div>
+            </Card>
+
+            <!-- 主要练习区域 -->
+            <div class="typing-area">
+              <!-- 当前字符显示 -->
+              <CharacterDisplay 
+                :character="practiceStore.currentCharacter"
+                :pinyin="practiceStore.currentPinyin"
+                :state="practiceStore.inputState"
+              />
+
+              <!-- 虚拟键盘 -->
+              <VirtualKeyboard 
+                :scheme="shuangpinStore.currentScheme"
+                :highlighted-keys="practiceStore.targetKeys"
+                :pressed-keys="practiceStore.pressedKeys"
+                :error-keys="practiceStore.errorKeys"
+                @key-press="handleVirtualKeyPress"
+              />
+
+              <!-- 输入提示 -->
+              <InputFeedback 
+                :feedback="practiceStore.inputFeedback"
+                :show-hints="showHints"
+              />
+            </div>
+
+            <!-- 练习控制 -->
+            <div class="practice-controls">
+              <div class="control-left">
+                <Button
+                  variant="ghost"
+                  @click="toggleHints"
+                  :class="{ 'active': showHints }"
+                >
+                  💡 提示
+                </Button>
+                <Button
+                  variant="ghost"
+                  @click="pausePractice"
+                  v-if="!practiceStore.isPaused"
+                >
+                  ⏸️ 暂停
+                </Button>
+                <Button
+                  variant="ghost"
+                  @click="resumePractice"
+                  v-else
+                >
+                  ▶️ 继续
+                </Button>
+              </div>
+
+              <div class="control-right">
+                <Button
+                  variant="outline"
+                  @click="restartPractice"
+                >
+                  🔄 重新开始
+                </Button>
+                <Button
+                  variant="ghost"
+                  @click="exitPractice"
+                >
+                  ❌ 退出练习
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 练习完成界面 -->
+          <transition name="completion">
+            <CompletionModal 
+              v-if="practiceStore.isCompleted"
+              :results="practiceStore.sessionResults"
+              @restart="restartPractice"
+              @exit="exitPractice"
+              @continue="continueToNext"
+            />
+          </transition>
+        </div>
+      </div>
+    </div>
+
+    <!-- 练习历史侧边栏 -->
+    <transition name="sidebar">
+      <div class="practice-sidebar" v-if="showSidebar">
+        <div class="sidebar-content">
+          <div class="sidebar-header">
+            <h3 class="sidebar-title">练习历史</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              @click="closeSidebar"
+            >
+              ✕
+            </Button>
+          </div>
+
+          <div class="sidebar-body">
+            <div 
+              v-for="record in practiceStore.recentSessions"
+              :key="record.id"
+              class="history-item"
+            >
+              <div class="history-info">
+                <div class="history-title">{{ record.lessonTitle }}</div>
+                <div class="history-stats">
+                  <span class="history-speed">{{ record.speed }} 字/分</span>
+                  <span class="history-accuracy">{{ record.accuracy }}%</span>
+                </div>
+              </div>
+              <div class="history-time">{{ formatRelativeTime(record.timestamp) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 设置面板 -->
+    <PracticeSettings 
+      v-if="showSettings"
+      @close="closeSettings"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useShuangpinStore } from '../stores/shuangpin'
-import { getShuangpinCode, validateShuangpinInput, generatePracticeText, checkKeyMatch } from '../utils/pinyin'
-import { getLesson } from '../data/lessons'
-import { updateErrorRecord } from '../utils/review'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAppStore } from '@/stores/app'
+import { useShuangpinStore } from '@/stores/shuangpin'
+import { usePracticeStore } from '@/stores/practice'
 
-const router = useRouter()
+// 组件导入
+import Card from '@/components/base/Card/index.vue'
+import Button from '@/components/base/Button/index.vue'
+import CharacterDisplay from '@/components/practice/CharacterDisplay/index.vue'
+import VirtualKeyboard from '@/components/practice/VirtualKeyboard/index.vue'
+import InputFeedback from '@/components/practice/InputFeedback/index.vue'
+import CompletionModal from '@/components/practice/CompletionModal/index.vue'
+import PracticeSettings from '@/components/practice/PracticeSettings/index.vue'
+
+// Stores
+const appStore = useAppStore()
+const shuangpinStore = useShuangpinStore()
+const practiceStore = usePracticeStore()
+
+// 路由
 const route = useRoute()
-const store = useShuangpinStore()
+const router = useRouter()
 
-// 练习状态
-const isStarted = ref(false)
-const time = ref(0)
-const timer = ref(null)
-const speed = ref(0)
-const accuracy = ref(100)
-const errorKeys = ref(new Set())
-
-// 当前课程信息
+// 响应式状态
+const selectedMode = ref('guided')
+const showHints = ref(true)
+const showSidebar = ref(false)
+const showSettings = ref(false)
 const currentLesson = ref(null)
 
-// 初始化课程信息
-onMounted(() => {
-  if (route.params.type === 'review') {
-    // 复习模式
-    currentLesson.value = JSON.parse(route.params.lesson)
-  } else {
-    // 普通练习模式
-    currentLesson.value = getLesson(parseInt(route.params.lessonId))
+// 练习模式配置
+const practiceMode = ref([
+  {
+    id: 'guided',
+    title: '引导练习',
+    description: '系统引导，逐步练习双拼键位',
+    icon: '🎯',
+    features: ['实时提示', '错误纠正', '进度跟踪']
+  },
+  {
+    id: 'speed',
+    title: '速度测试',
+    description: '测试打字速度和准确率',
+    icon: '⚡',
+    features: ['时间限制', '速度统计', '排行榜']
+  },
+  {
+    id: 'custom',
+    title: '自定义练习',
+    description: '自定义练习内容和难度',
+    icon: '⚙️',
+    features: ['自选文本', '难度调节', '个性化']
+  },
+  {
+    id: 'game',
+    title: '趣味模式',
+    description: '游戏化练习，寓教于乐',
+    icon: '🎮',
+    features: ['游戏机制', '成就系统', '趣味挑战']
   }
+])
+
+// 计算属性
+const practiceTitle = computed(() => {
+  const modeMap = {
+    guided: '引导练习',
+    speed: '速度测试', 
+    custom: '自定义练习',
+    game: '趣味模式'
+  }
+  return modeMap[selectedMode.value] || '打字练习'
 })
 
-// 练习文本
-const practiceText = ref([])
-const currentIndex = ref(0)
-
-// 当前练习字符
-const currentChar = computed(() => practiceText.value[currentIndex.value]?.char || '')
-
-// 当前拼音
-const currentPinyin = computed(() => {
-  if (!currentChar.value) return null
-  return practiceText.value[currentIndex.value]
-})
-
-// 键盘布局
-const keyboardLayout = computed(() => {
-  return store.getCurrentSchemeLayout
-})
-
-// 判断是否目标键位
-const isTargetKey = (key) => {
-  if (!currentPinyin.value) return false
-  const { shengmu, yunmu } = currentPinyin.value
-  return key.key === shengmu || key.key === yunmu
-}
-
-// 判断是否错误键位
-const isErrorKey = (key) => {
-  return errorKeys.value.has(key.key)
-}
-
-// 开始练习
-const startPractice = () => {
-  // 生成练习文本
+// 方法
+const getPracticeTitle = () => {
   if (currentLesson.value) {
-    practiceText.value = generatePracticeText(currentLesson.value)
-  } else {
-    // 默认练习文本
-    practiceText.value = [
-      { char: '我', shengmu: 'w', yunmu: 'o', pinyin: 'wo' },
-      { char: '是', shengmu: 'u', yunmu: 'i', pinyin: 'shi' },
-      { char: '你', shengmu: 'n', yunmu: 'i', pinyin: 'ni' }
-    ]
+    return currentLesson.value.title
   }
-
-  isStarted.value = true
-  currentIndex.value = 0
-  time.value = 0
-  speed.value = 0
-  accuracy.value = 100
-  errorKeys.value.clear()
-
-  timer.value = setInterval(() => {
-    time.value++
-    updateSpeed()
-  }, 1000)
-
-  window.addEventListener('keydown', handleKeydown)
+  return practiceTitle.value
 }
 
-// 退出练习
-const quitPractice = () => {
-  if (timer.value) {
-    clearInterval(timer.value)
+const getPracticeDescription = () => {
+  if (currentLesson.value) {
+    return currentLesson.value.description
   }
-  window.removeEventListener('keydown', handleKeydown)
   
-  if (route.params.type === 'review') {
-    router.push('/review')
-  } else {
-    router.push('/learning')
+  const modeDescriptions = {
+    guided: '跟随系统指导，逐步掌握双拼输入法',
+    speed: '测试您的打字速度和准确率表现',
+    custom: '使用自定义内容进行针对性练习',
+    game: '在游戏中提升双拼输入技能'
+  }
+  return modeDescriptions[selectedMode.value] || '提升您的双拼输入技能'
+}
+
+const selectMode = (modeId) => {
+  selectedMode.value = modeId
+}
+
+const startPractice = async () => {
+  try {
+    appStore.setLoading(true, '正在准备练习...')
+    
+    const practiceConfig = {
+      mode: selectedMode.value,
+      lesson: currentLesson.value,
+      scheme: shuangpinStore.currentScheme,
+      settings: {
+        showHints: showHints.value,
+        enableSound: appStore.settings.enableSound,
+        difficulty: appStore.settings.difficulty
+      }
+    }
+
+    await practiceStore.startPractice(practiceConfig)
+    
+    appStore.showNotification({
+      type: 'success',
+      message: '练习已开始，加油！',
+      duration: 2000
+    })
+  } catch (error) {
+    appStore.showNotification({
+      type: 'error',
+      message: '练习启动失败，请重试',
+      duration: 3000
+    })
+  } finally {
+    appStore.setLoading(false)
   }
 }
 
-// 处理键盘输入
+const pausePractice = () => {
+  practiceStore.pausePractice()
+  appStore.showNotification({
+    type: 'info',
+    message: '练习已暂停',
+    duration: 2000
+  })
+}
+
+const resumePractice = () => {
+  practiceStore.resumePractice()
+  appStore.showNotification({
+    type: 'success',
+    message: '练习已恢复',
+    duration: 2000
+  })
+}
+
+const restartPractice = () => {
+  practiceStore.restartPractice()
+  appStore.showNotification({
+    type: 'info',
+    message: '练习已重新开始',
+    duration: 2000
+  })
+}
+
+const exitPractice = () => {
+  practiceStore.exitPractice()
+  
+  // 根据来源决定返回页面
+  if (route.query.from === 'dashboard') {
+    router.push('/')
+  } else if (route.query.from === 'learning') {
+    router.push('/learning')
+  } else {
+    router.push('/practice')
+  }
+}
+
+const continueToNext = () => {
+  // 继续下一个课程或推荐练习
+  if (currentLesson.value?.nextLessonId) {
+    router.push(`/practice/${currentLesson.value.nextLessonId}`)
+  } else {
+    // 显示推荐练习
+    router.push('/practice')
+  }
+}
+
+const toggleHints = () => {
+  showHints.value = !showHints.value
+  practiceStore.updateSettings({ showHints: showHints.value })
+}
+
+const openSidebar = () => {
+  showSidebar.value = true
+}
+
+const closeSidebar = () => {
+  showSidebar.value = false
+}
+
+const openSettings = () => {
+  showSettings.value = true
+}
+
+const closeSettings = () => {
+  showSettings.value = false
+}
+
+const handleVirtualKeyPress = (key) => {
+  practiceStore.processKeyInput(key)
+}
+
 const handleKeydown = (event) => {
-  if (!isStarted.value) {
-    if (event.code === 'Space') {
-      startPractice()
+  // 全局键盘事件处理
+  if (!practiceStore.isActive) return
+  
+  // 防止默认行为
+  event.preventDefault()
+  
+  // 处理特殊键
+  if (event.key === 'Escape') {
+    if (practiceStore.isPaused) {
+      resumePractice()
+    } else {
+      pausePractice()
     }
     return
   }
   
+  // 处理普通输入
   const key = event.key.toLowerCase()
-  if (!currentPinyin.value) return
-
-  const { char, shengmu, yunmu } = currentPinyin.value
-  
-  if (checkKeyMatch(key, shengmu, yunmu)) {
-    // 正确按键
-    errorKeys.value.delete(key)
-    currentIndex.value++
-    
-    // 更新错误记录（正确）
-    updateErrorRecord(char, shengmu, yunmu, false)
-    
-    if (currentIndex.value >= practiceText.value.length) {
-      // 完成练习
-      finishPractice()
-    }
-  } else {
-    // 错误按键
-    errorKeys.value.add(key)
-    updateAccuracy()
-    
-    // 更新错误记录（错误）
-    updateErrorRecord(char, shengmu, yunmu, true)
-  }
+  practiceStore.processKeyInput(key)
 }
 
-// 更新速度
-const updateSpeed = () => {
-  if (time.value === 0) return
-  speed.value = Math.round((currentIndex.value * 60) / time.value)
-}
-
-// 更新正确率
-const updateAccuracy = () => {
-  const totalAttempts = currentIndex.value + errorKeys.value.size
-  accuracy.value = Math.round((currentIndex.value / totalAttempts) * 100)
-}
-
-// 完成练习
-const finishPractice = () => {
-  clearInterval(timer.value)
-  window.removeEventListener('keydown', handleKeydown)
-  
-  // 更新练习统计
-  store.updatePracticeStats({
-    totalTime: store.practiceStats.totalTime + time.value,
-    totalChars: store.practiceStats.totalChars + practiceText.value.length,
-    accuracy: Math.round((store.practiceStats.accuracy + accuracy.value) / 2),
-    speed: Math.round((store.practiceStats.speed + speed.value) / 2)
-  })
-
-  // 更新课程进度
-  if (currentLesson.value.id) {
-    store.updateLessonProgress(currentLesson.value.id, 100)
-  }
-}
-
-// 格式化时间
 const formatTime = (seconds) => {
   const minutes = Math.floor(seconds / 60)
   const remainingSeconds = seconds % 60
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
 }
 
-// 组件生命周期
-onUnmounted(() => {
-  if (timer.value) {
-    clearInterval(timer.value)
+const formatRelativeTime = (timestamp) => {
+  const now = Date.now()
+  const diff = now - timestamp
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+
+  if (days > 0) return `${days}天前`
+  if (hours > 0) return `${hours}小时前`
+  if (minutes > 0) return `${minutes}分钟前`
+  return '刚刚'
+}
+
+// 监听器
+watch(() => route.params.lessonId, async (newLessonId) => {
+  if (newLessonId) {
+    currentLesson.value = await practiceStore.getLesson(parseInt(newLessonId))
   }
-  window.removeEventListener('keydown', handleKeydown)
+}, { immediate: true })
+
+// 生命周期
+onMounted(async () => {
+  // 检查路由参数
+  const { lessonId, mode } = route.params
+  const { from } = route.query
+  
+  if (lessonId) {
+    currentLesson.value = await practiceStore.getLesson(parseInt(lessonId))
+  }
+  
+  if (mode) {
+    selectedMode.value = mode
+  }
+  
+  // 添加键盘监听
+  document.addEventListener('keydown', handleKeydown)
+  
+  // 加载练习历史
+  await practiceStore.loadRecentSessions()
+})
+
+onUnmounted(() => {
+  // 清理资源
+  document.removeEventListener('keydown', handleKeydown)
+  
+  // 确保练习状态正确清理
+  if (practiceStore.isActive) {
+    practiceStore.exitPractice()
+  }
 })
 </script>
 
 <style scoped>
-.keyboard-layout {
-  max-width: 800px;
-  margin: 0 auto;
+.practice {
+  @apply min-h-screen bg-gradient-to-br from-gray-50 to-gray-100;
 }
 
-.key-cell {
-  min-height: 60px;
-  user-select: none;
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
-@media (min-width: 640px) {
-  .key-cell {
-    min-height: 45px;
+/* 练习头部 */
+.practice-header {
+  @apply bg-white border-b border-gray-200 sticky top-16 z-40;
+}
+
+.header-content {
+  @apply py-6 flex flex-col lg:flex-row lg:items-center lg:justify-between;
+}
+
+.practice-info {
+  @apply mb-6 lg:mb-0;
+}
+
+.lesson-breadcrumb {
+  @apply flex items-center text-sm text-gray-500 mb-2;
+}
+
+.breadcrumb-link {
+  @apply hover:text-gray-700 transition-colors;
+}
+
+.breadcrumb-separator {
+  @apply mx-2;
+}
+
+.breadcrumb-current {
+  @apply text-gray-900 font-medium;
+}
+
+.practice-title {
+  @apply text-2xl lg:text-3xl font-bold text-gray-900 mb-2;
+}
+
+.practice-description {
+  @apply text-gray-600 max-w-md;
+}
+
+.stats-panel {
+  @apply flex space-x-6;
+}
+
+.stat-item {
+  @apply flex items-center space-x-3 bg-gray-50 rounded-lg p-3;
+}
+
+.stat-icon {
+  @apply text-2xl;
+}
+
+.stat-value {
+  @apply text-lg font-bold text-gray-900;
+}
+
+.stat-label {
+  @apply text-sm text-gray-600;
+}
+
+/* 主练习区域 */
+.practice-main {
+  @apply py-8;
+}
+
+.practice-content {
+  @apply space-y-8;
+}
+
+/* 模式选择 */
+.mode-selector-card {
+  @apply bg-white;
+}
+
+.card-title {
+  @apply text-xl font-semibold text-gray-900;
+}
+
+.mode-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6 mb-8;
+}
+
+.mode-card {
+  @apply p-6 border-2 border-gray-200 rounded-lg cursor-pointer transition-all;
+  @apply hover:border-blue-300 hover:shadow-md;
+}
+
+.mode-card--selected {
+  @apply border-blue-500 bg-blue-50 ring-2 ring-blue-200;
+}
+
+.mode-icon {
+  @apply text-3xl mb-4;
+}
+
+.mode-title {
+  @apply text-lg font-semibold text-gray-900 mb-2;
+}
+
+.mode-description {
+  @apply text-gray-600 mb-4;
+}
+
+.mode-features {
+  @apply flex flex-wrap gap-2;
+}
+
+.mode-feature {
+  @apply px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full;
+}
+
+.mode-actions {
+  @apply text-center;
+}
+
+.start-button {
+  @apply min-w-48;
+}
+
+.start-icon {
+  @apply mr-2;
+}
+
+/* 练习进行中 */
+.practice-active {
+  @apply space-y-6;
+}
+
+.progress-card {
+  @apply bg-white;
+}
+
+.progress-content {
+  @apply space-y-4;
+}
+
+.progress-info {
+  @apply flex items-center justify-between;
+}
+
+.progress-text {
+  @apply text-lg font-medium text-gray-900;
+}
+
+.progress-current {
+  @apply text-blue-600;
+}
+
+.progress-separator {
+  @apply mx-2 text-gray-400;
+}
+
+.progress-total {
+  @apply text-gray-600;
+}
+
+.progress-percentage {
+  @apply text-2xl font-bold text-blue-600;
+}
+
+.progress-bar {
+  @apply w-full h-3 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500;
+}
+
+.typing-area {
+  @apply bg-white rounded-lg shadow-sm p-8 space-y-8;
+}
+
+.practice-controls {
+  @apply flex items-center justify-between bg-white rounded-lg p-4;
+}
+
+.control-left,
+.control-right {
+  @apply flex items-center space-x-3;
+}
+
+/* 侧边栏 */
+.practice-sidebar {
+  @apply fixed right-0 top-16 bottom-0 w-80 bg-white border-l border-gray-200 z-30;
+  @apply transform transition-transform;
+}
+
+.sidebar-content {
+  @apply h-full flex flex-col;
+}
+
+.sidebar-header {
+  @apply flex items-center justify-between p-4 border-b border-gray-200;
+}
+
+.sidebar-title {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+.sidebar-body {
+  @apply flex-1 overflow-y-auto p-4 space-y-3;
+}
+
+.history-item {
+  @apply flex items-center justify-between p-3 bg-gray-50 rounded-lg;
+}
+
+.history-title {
+  @apply font-medium text-gray-900;
+}
+
+.history-stats {
+  @apply text-sm text-gray-600 space-x-2;
+}
+
+.history-time {
+  @apply text-xs text-gray-500;
+}
+
+/* 动画 */
+.completion-enter-active,
+.completion-leave-active {
+  @apply transition-all duration-300;
+}
+
+.completion-enter-from,
+.completion-leave-to {
+  @apply opacity-0 scale-95;
+}
+
+.sidebar-enter-active,
+.sidebar-leave-active {
+  @apply transition-transform duration-300;
+}
+
+.sidebar-enter-from,
+.sidebar-leave-to {
+  @apply translate-x-full;
+}
+
+/* 暗色主题支持 */
+[data-theme='dark'] .practice {
+  @apply bg-gradient-to-br from-gray-900 to-gray-800;
+}
+
+[data-theme='dark'] .practice-header {
+  @apply bg-gray-900 border-gray-700;
+}
+
+[data-theme='dark'] .practice-title {
+  @apply text-gray-100;
+}
+
+[data-theme='dark'] .practice-description {
+  @apply text-gray-300;
+}
+
+[data-theme='dark'] .stat-item {
+  @apply bg-gray-800;
+}
+
+[data-theme='dark'] .stat-value {
+  @apply text-gray-100;
+}
+
+[data-theme='dark'] .stat-label {
+  @apply text-gray-300;
+}
+
+[data-theme='dark'] .mode-card {
+  @apply border-gray-700 bg-gray-800;
+}
+
+[data-theme='dark'] .mode-card:hover {
+  @apply border-blue-600 bg-gray-700;
+}
+
+[data-theme='dark'] .mode-title {
+  @apply text-gray-100;
+}
+
+[data-theme='dark'] .mode-description {
+  @apply text-gray-300;
+}
+
+[data-theme='dark'] .typing-area {
+  @apply bg-gray-800;
+}
+
+[data-theme='dark'] .practice-controls {
+  @apply bg-gray-800;
+}
+
+[data-theme='dark'] .practice-sidebar {
+  @apply bg-gray-900 border-gray-700;
+}
+
+[data-theme='dark'] .sidebar-title {
+  @apply text-gray-100;
+}
+
+[data-theme='dark'] .history-item {
+  @apply bg-gray-800;
+}
+
+[data-theme='dark'] .history-title {
+  @apply text-gray-100;
+}
+
+[data-theme='dark'] .history-stats {
+  @apply text-gray-300;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .stats-panel {
+    @apply grid grid-cols-2 gap-4 space-x-0;
+  }
+  
+  .practice-controls {
+    @apply flex-col space-y-4;
+  }
+  
+  .control-left,
+  .control-right {
+    @apply w-full justify-center;
+  }
+  
+  .practice-sidebar {
+    @apply w-full;
   }
 }
-
-@media (min-width: 768px) {
-  .key-cell {
-    min-height: 50px;
-  }
-}
-</style> 
+</style>
