@@ -365,13 +365,13 @@ const startPractice = async () => {
 
     await practiceStore.startPractice(practiceConfig)
     
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'success',
       message: '练习已开始，加油！',
       duration: 2000
     })
   } catch (error) {
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'error',
       message: '练习启动失败，请重试',
       duration: 3000
@@ -383,7 +383,7 @@ const startPractice = async () => {
 
 const pausePractice = () => {
   practiceStore.pausePractice()
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'info',
     message: '练习已暂停',
     duration: 2000
@@ -392,7 +392,7 @@ const pausePractice = () => {
 
 const resumePractice = () => {
   practiceStore.resumePractice()
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '练习已恢复',
     duration: 2000
@@ -401,7 +401,7 @@ const resumePractice = () => {
 
 const restartPractice = () => {
   practiceStore.restartPractice()
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'info',
     message: '练习已重新开始',
     duration: 2000

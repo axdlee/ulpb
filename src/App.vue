@@ -155,7 +155,7 @@ const handleGlobalShortcuts = (event) => {
     'k': () => {
       if (isCtrl) {
         event.preventDefault()
-        appStore.showNotification({
+        appStore.addNotification({
           type: 'info',
           message: '快速搜索功能即将推出',
           duration: 2000
@@ -167,7 +167,7 @@ const handleGlobalShortcuts = (event) => {
     ',': () => {
       if (isCtrl) {
         event.preventDefault()
-        appStore.showNotification({
+        appStore.addNotification({
           type: 'info',
           message: '设置功能即将推出',
           duration: 2000
@@ -267,7 +267,7 @@ const setupErrorHandling = () => {
   // 全局错误处理
   window.addEventListener('error', (event) => {
     console.error('Global error:', event.error)
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'error',
       message: '应用发生错误，请刷新页面重试',
       duration: 5000
@@ -277,7 +277,7 @@ const setupErrorHandling = () => {
   // Promise 拒绝处理
   window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason)
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'error',
       message: '数据加载失败，请稍后重试',
       duration: 5000
@@ -293,16 +293,16 @@ const initializeApp = async () => {
 
     // 初始化stores
     await Promise.all([
-      appStore.initialize(),
-      shuangpinStore.initialize(),
-      practiceStore.initialize()
+      appStore.init(),
+      shuangpinStore.init(),
+      practiceStore.init()
     ])
 
     // 应用主题
     handleThemeChange()
 
     // 显示欢迎消息
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'success',
       message: '欢迎使用双拼练习！',
       duration: 3000
@@ -310,7 +310,7 @@ const initializeApp = async () => {
 
   } catch (error) {
     console.error('App initialization failed:', error)
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'error',
       message: '应用初始化失败，请刷新页面重试',
       duration: 0 // 持久显示

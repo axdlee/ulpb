@@ -575,13 +575,13 @@ const refreshRecommendations = async () => {
   isRefreshingRecommendations.value = true
   try {
     await practiceStore.refreshRecommendations()
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'success',
       message: '推荐已刷新！',
       duration: 2000
     })
   } catch (error) {
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'error',
       message: '刷新失败，请稍后重试',
       duration: 3000

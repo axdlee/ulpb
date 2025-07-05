@@ -412,7 +412,7 @@ const startLearningMode = () => {
   // 根据模式设置高亮键位
   updateHighlightedKeys()
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: `开始${learningModes.value.find(m => m.id === selectedMode.value)?.title}`,
     duration: 2000
@@ -482,7 +482,7 @@ const handleStepComplete = () => {
 const handlePracticeComplete = () => {
   practiceStore.updateLessonProgress(currentLessonId.value, 100)
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '课程学习完成！',
     duration: 3000
@@ -497,7 +497,7 @@ const handleKeyClick = (key) => {
   // 处理键位点击，显示相关信息
   const keyInfo = shuangpinStore.getKeyInfo(key)
   if (keyInfo) {
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'info',
       message: `${key.toUpperCase()}: ${keyInfo.description}`,
       duration: 2000
@@ -518,7 +518,7 @@ const restartLesson = () => {
   showModeSelector.value = true
   selectedMode.value = ''
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'info',
     message: '课程已重置',
     duration: 2000
@@ -599,7 +599,7 @@ const closeSettings = () => {
 const saveLearningSettings = (settings) => {
   Object.assign(learningSettings.value, settings)
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '学习设置已保存',
     duration: 2000

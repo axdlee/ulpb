@@ -652,13 +652,13 @@ const refreshStats = async () => {
   isRefreshing.value = true
   try {
     await practiceStore.refreshStats()
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'success',
       message: '统计数据已刷新',
       duration: 2000
     })
   } catch (error) {
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'error',
       message: '刷新失败，请稍后重试',
       duration: 3000
@@ -689,7 +689,7 @@ const handleExport = (format, options) => {
   practiceStore.exportStats(format, options)
   closeExportModal()
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '数据导出成功',
     duration: 2000

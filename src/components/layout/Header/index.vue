@@ -200,9 +200,9 @@ const isActiveRoute = (path) => {
 }
 
 const switchTheme = (themeKey) => {
-  appStore.setTheme(themeKey)
+  appStore.changeTheme(themeKey)
   if (isMobile.value) {
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'success',
       message: `已切换到${availableThemes.value[themeKey].name}主题`,
       duration: 2000
@@ -235,7 +235,7 @@ const closeUserMenu = () => {
 const openSettings = () => {
   closeUserMenu()
   // TODO: 打开设置模态框
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'info',
     message: '设置功能即将推出',
     duration: 3000
@@ -245,7 +245,7 @@ const openSettings = () => {
 const exportData = () => {
   closeUserMenu()
   // TODO: 实现数据导出
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'info',
     message: '数据导出功能即将推出',
     duration: 3000
@@ -255,7 +255,7 @@ const exportData = () => {
 const importData = () => {
   closeUserMenu()
   // TODO: 实现数据导入
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'info',
     message: '数据导入功能即将推出',
     duration: 3000
@@ -264,7 +264,7 @@ const importData = () => {
 
 const showAbout = () => {
   closeUserMenu()
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'info',
     message: '双拼练习 v2.0 - 现代化双拼输入法学习应用',
     duration: 5000

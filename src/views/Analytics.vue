@@ -902,13 +902,13 @@ const refreshAnalysis = async () => {
   isRefreshing.value = true
   try {
     await practiceStore.refreshAnalyticsData(selectedTimeRange.value)
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'success',
       message: '分析数据已刷新',
       duration: 2000
     })
   } catch (error) {
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'error',
       message: '刷新失败，请稍后重试',
       duration: 3000
@@ -926,7 +926,7 @@ const generateInsights = async () => {
   isGeneratingInsights.value = true
   try {
     await practiceStore.generateIntelligentInsights(selectedTimeRange.value)
-    appStore.showNotification({
+    appStore.addNotification({
       type: 'success',
       message: 'AI洞察已更新',
       duration: 2000
@@ -988,7 +988,7 @@ const handleDrillDownRowClick = (row) => {
 const exportDrillDownData = () => {
   practiceStore.exportDrillDownData(selectedDrillDownDimension.value, selectedTimeRange.value)
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '数据导出成功',
     duration: 2000
@@ -1016,7 +1016,7 @@ const createNewGoal = () => {
 const handleTimeOptimization = (optimization) => {
   practiceStore.applyTimeOptimization(optimization)
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '时间优化方案已应用',
     duration: 2000
@@ -1026,7 +1026,7 @@ const handleTimeOptimization = (optimization) => {
 const handleMethodOptimization = (optimization) => {
   practiceStore.applyMethodOptimization(optimization)
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '学习方法优化已应用',
     duration: 2000
@@ -1036,7 +1036,7 @@ const handleMethodOptimization = (optimization) => {
 const handleContentOptimization = (optimization) => {
   practiceStore.applyContentOptimization(optimization)
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '内容优化方案已应用',
     duration: 2000
@@ -1046,7 +1046,7 @@ const handleContentOptimization = (optimization) => {
 const handleEnvironmentOptimization = (optimization) => {
   practiceStore.applyEnvironmentOptimization(optimization)
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '环境优化建议已应用',
     duration: 2000
@@ -1065,7 +1065,7 @@ const saveSettings = (settings) => {
   Object.assign(analyticsSettings.value, settings)
   practiceStore.saveAnalyticsSettings(settings)
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '分析设置已保存',
     duration: 2000
@@ -1084,7 +1084,7 @@ const handleReportExport = (format, options) => {
   practiceStore.exportAnalyticsReport(format, options, selectedTimeRange.value)
   closeExportModal()
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '分析报告导出成功',
     duration: 2000
@@ -1099,7 +1099,7 @@ const handleGoalCreation = (goal) => {
   practiceStore.createPersonalizedGoal(goal)
   closeGoalModal()
   
-  appStore.showNotification({
+  appStore.addNotification({
     type: 'success',
     message: '个性化目标已创建',
     duration: 2000
