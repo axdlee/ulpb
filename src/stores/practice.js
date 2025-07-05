@@ -150,6 +150,112 @@ export const usePracticeStore = defineStore('practice', () => {
     return globalLearningSystem.recommendNextPractice()
   })
 
+  // Dashboard相关计算属性
+  const learningStreak = computed(() => {
+    if (state.sessionHistory.length === 0) return 0
+    
+    const today = new Date()
+    let streak = 0
+    
+    for (let i = 0; i < 30; i++) {
+      const checkDate = new Date(today)
+      checkDate.setDate(today.getDate() - i)
+      const dateStr = checkDate.toDateString()
+      
+      const hasSessionOnDate = state.sessionHistory.some(session => {
+        return new Date(session.timestamp).toDateString() === dateStr
+      })
+      
+      if (hasSessionOnDate) {
+        streak++
+      } else if (i > 0) {
+        break
+      }
+    }
+    
+    return streak
+  })
+
+  const userLevel = computed(() => {
+    const totalTime = state.sessionHistory.reduce((sum, s) => sum + s.duration, 0)
+    const hours = totalTime / (1000 * 60 * 60)
+    
+    if (hours < 2) return 1
+    if (hours < 5) return 2
+    if (hours < 10) return 3
+    if (hours < 20) return 4
+    if (hours < 40) return 5
+    return Math.min(10, Math.floor(hours / 10) + 1)
+  })
+
+  const recentPractices = computed(() => {
+    return state.sessionHistory
+      .slice(-10)
+      .reverse()
+      .map(session => ({
+        id: session.id,
+        lessonId: session.lessonId,
+        date: new Date(session.timestamp),
+        duration: session.duration,
+        speed: session.speed,
+        accuracy: session.accuracy,
+        score: session.score
+      }))
+  })
+
+  const recentAchievements = computed(() => {
+    return state.newAchievements
+      .slice(-5)
+      .reverse()
+      .map(achievement => ({
+        id: achievement.id,
+        title: achievement.title,
+        description: achievement.description,
+        icon: achievement.icon,
+        earnedAt: new Date(achievement.timestamp)
+      }))
+  })
+
+  const upcomingAchievements = computed(() => {
+    // 模拟即将获得的成就
+    const upcoming = []
+    const currentSpeed = overallStats.value.averageSpeed
+    const currentAccuracy = overallStats.value.averageAccuracy
+    
+    if (currentSpeed > 0 && currentSpeed < 30) {
+      upcoming.push({
+        id: 'speed-30',
+        title: '速度达人',
+        description: '平均速度达到30字/分钟',
+        icon: '🚀',
+        progress: Math.round((currentSpeed / 30) * 100)
+      })
+    }
+    
+    if (currentAccuracy > 0 && currentAccuracy < 95) {
+      upcoming.push({
+        id: 'accuracy-95',
+        title: '精准射手',
+        description: '准确率达到95%',
+        icon: '🎯',
+        progress: Math.round((currentAccuracy / 95) * 100)
+      })
+    }
+    
+    return upcoming
+  })
+
+  const currentLessonProgress = computed(() => {
+    if (!state.currentLessonId) return 0
+    return state.lessonProgress[state.currentLessonId] || 0
+  })
+
+  const dailyPracticeProgress = computed(() => {
+    const todayTime = todayStats.value.totalTime / (1000 * 60) // 转换为分钟
+    const dailyGoal = 30 // 30分钟目标
+    return Math.min(Math.round((todayTime / dailyGoal) * 100), 100)
+  })
+
   // 动作方法
   const startPractice = async (lessonId, practiceText) => {
     try {
@@ -569,6 +675,13 @@ export const usePracticeStore = defineStore('practice', () => {
     todayStats,
     overallStats,
     practiceRecommendation,
+    learningStreak,
+    userLevel,
+    recentPractices,
+    recentAchievements,
+    upcomingAchievements,
+    currentLessonProgress,
+    dailyPracticeProgress,
     
     // 方法
     startPractice,

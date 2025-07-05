@@ -353,15 +353,15 @@ const userLevel = computed(() => practiceStore.userLevel || 1)
 
 const todayProgress = computed(() => {
   const target = 60 // 今日目标：60分钟
-  const actual = todayStats.value.practiceTime
+  const actual = todayStats.value.totalTime / (1000 * 60) // 转换为分钟
   return Math.min(Math.round((actual / target) * 100), 100)
 })
 
 const todayStats = computed(() => ({
-  practiceTime: practiceStore.todayStats.practiceTime || 0,
-  charCount: practiceStore.todayStats.charCount || 0,
-  accuracy: practiceStore.todayStats.accuracy || 0,
-  speed: practiceStore.todayStats.speed || 0
+  practiceTime: practiceStore.todayStats.totalTime / (1000 * 60) || 0, // 分钟
+  charCount: practiceStore.todayStats.totalChars || 0,
+  accuracy: practiceStore.todayStats.avgAccuracy || 0,
+  speed: practiceStore.todayStats.avgSpeed || 0
 }))
 
 const progressMarkers = computed(() => [
