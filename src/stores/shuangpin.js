@@ -551,6 +551,66 @@ export const useShuangpinStore = defineStore('shuangpin', {
       
       return result
     },
+
+    // 获取键位详细信息 (Learning页面需要)
+    getKeyInfo(key) {
+      const mapping = this.getKeyMapping(key)
+      if (!mapping || mapping.mappings.length === 0) {
+        return {
+          key: key,
+          type: 'unknown',
+          pinyin: '',
+          description: '未知键位',
+          examples: []
+        }
+      }
+
+      const mainMapping = mapping.mappings[0]
+      const examples = this.getExamplesForKey(key)
+      
+      return {
+        key: key,
+        type: mainMapping.type,
+        pinyin: mainMapping.value,
+        description: `${mainMapping.type === 'shengmu' ? '声母' : '韵母'} ${mainMapping.value}`,
+        examples: examples,
+        allMappings: mapping.mappings
+      }
+    },
+
+    // 获取键位示例字符
+    getExamplesForKey(key) {
+      const exampleMap = {
+        'q': ['曲', '全', '去'],
+        'w': ['我', '问', '为'],
+        'e': ['额', '恶', '鹅'], 
+        'r': ['人', '如', '然'],
+        't': ['他', '天', '太'],
+        'y': ['有', '一', '要'],
+        'u': ['是', '上', '时'],
+        'i': ['在', '中', '之'],
+        'o': ['的', '了', '到'],
+        'p': ['不', '把', '被'],
+        'a': ['啊', '安', '案'],
+        's': ['三', '十', '说'],
+        'd': ['大', '对', '都'],
+        'f': ['发', '分', '非'],
+        'g': ['个', '国', '过'],
+        'h': ['和', '会', '还'],
+        'j': ['就', '家', '见'],
+        'k': ['可', '看', '开'],
+        'l': ['来', '老', '了'],
+        'z': ['这', '知', '只'],
+        'x': ['小', '下', '想'],
+        'c': ['从', '出', '长'],
+        'v': ['很', '和', '或'],
+        'b': ['本', '比', '别'],
+        'n': ['那', '你', '年'],
+        'm': ['没', '么', '们']
+      }
+      
+      return exampleMap[key] || []
+    },
     
     // 比较两个方案
     compareSchemes(schemeKey1, schemeKey2) {
