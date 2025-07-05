@@ -169,13 +169,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { themeManager, THEME_PRESETS } from '../utils/theme'
-import { useShuangpinStore } from '../stores/shuangpin'
+import { useAppStore } from '../stores/app'
 
-const store = useShuangpinStore()
+const appStore = useAppStore()
 
 // 组件状态
-const selectedTheme = ref(store.currentTheme)
+const selectedTheme = ref(appStore.state.currentTheme)
 const showCustomTheme = ref(false)
 const showImportDialog = ref(false)
 const importData = ref('')
@@ -194,12 +193,15 @@ const customTheme = ref({
 
 // 计算属性
 const themes = computed(() => {
-  return themeManager.getThemes()
+  return Object.entries(appStore.state.themes).map(([key, theme]) => ({
+    value: key,
+    ...theme
+  }))
 })
 
 // 方法
 const handleThemeChange = () => {
-  themeManager.changeTheme(selectedTheme.value)
+  appStore.changeTheme(selectedTheme.value)
 }
 
 const selectTheme = (themeValue) => {
@@ -208,7 +210,21 @@ const selectTheme = (themeValue) => {
 }
 
 const getColorValue = (color) => {
-  return themeManager.getColorValue(color)
+  const colorMap = {
+    blue: '#3b82f6',
+    indigo: '#6366f1', 
+    purple: '#8b5cf6',
+    gray: '#6b7280',
+    white: '#ffffff',
+    sky: '#0ea5e9',
+    cyan: '#06b6d4',
+    teal: '#14b8a6',
+    orange: '#f97316',
+    amber: '#f59e0b',
+    yellow: '#eab308',
+    emerald: '#10b981'
+  }
+  return colorMap[color] || color
 }
 
 const toggleCustomTheme = () => {
@@ -217,16 +233,17 @@ const toggleCustomTheme = () => {
 
 const saveCustomTheme = () => {
   if (customTheme.value.name.trim()) {
-    const theme = themeManager.createCustomTheme(
-      customTheme.value.name,
-      customTheme.value.colors
-    )
-    // 自动切换到新创建的主题
-    const themeKey = Object.keys(store.themes).find(key => store.themes[key] === theme)
-    if (themeKey) {
-      selectTheme(themeKey)
+    // 创建自定义主题
+    const themeKey = `custom_${Date.now()}`
+    appStore.state.themes[themeKey] = {
+      name: customTheme.value.name,
+      colors: customTheme.value.colors,
+      isCustom: true
     }
+    // 自动切换到新创建的主题
+    selectTheme(themeKey)
     resetCustomTheme()
+    appStore.saveSettings()
   }
 }
 
@@ -244,8 +261,14 @@ const resetCustomTheme = () => {
 }
 
 const exportTheme = () => {
-  const themeData = themeManager.exportTheme(selectedTheme.value)
-  if (themeData) {
+  const theme = appStore.state.themes[selectedTheme.value]
+  if (theme) {
+    const themeData = JSON.stringify({
+      name: theme.name,
+      colors: theme.colors,
+      exportDate: new Date().toISOString()
+    }, null, 2)
+    
     // 创建下载链接
     const blob = new Blob([themeData], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -262,14 +285,39 @@ const importTheme = () => {
 }
 
 const confirmImport = () => {
-  const result = themeManager.importTheme(importData.value)
-  if (result.success) {
-    // 导入成功，切换到新主题
-    selectTheme(result.themeKey)
-    showImportDialog.value = false
-    importData.value = ''
-  } else {
-    alert(result.error)
+  try {
+    const themeData = JSON.parse(importData.value)
+    if (themeData.name && themeData.colors) {
+      const themeKey = `imported_${Date.now()}`
+      appStore.state.themes[themeKey] = {
+        name: themeData.name,
+        colors: themeData.colors,
+        isCustom: true,
+        isImported: true
+      }
+      appStore.saveSettings()
+      // 导入成功，切换到新主题
+      selectTheme(themeKey)
+      showImportDialog.value = false
+      importData.value = ''
+      appStore.addNotification({
+        type: 'success',
+        title: '导入成功',
+        message: '主题已成功导入'
+      })
+    } else {
+      appStore.addNotification({
+        type: 'error',
+        title: '导入失败',
+        message: '主题格式不正确'
+      })
+    }
+  } catch (error) {
+    appStore.addNotification({
+      type: 'error',
+      title: '导入失败', 
+      message: '主题数据解析失败'
+    })
   }
 }
 
@@ -281,7 +329,7 @@ const cancelImport = () => {
 // 生命周期
 onMounted(() => {
   // 初始化主题
-  themeManager.applyTheme()
+  appStore.loadSettings()
 })
 </script>
 

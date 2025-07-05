@@ -10,8 +10,8 @@ export class ThemeManager {
     // 延迟初始化 store 以避免循环依赖
     if (typeof window !== 'undefined') {
       setTimeout(() => {
-        const { useShuangpinStore } = require('../stores/shuangpin')
-        this.store = useShuangpinStore()
+        const { useAppStore } = require('../stores/app')
+        this.store = useAppStore()
         this.loadTheme()
       }, 0)
     }
@@ -180,16 +180,16 @@ export const themeManager = new ThemeManager()
 export function useTheme() {
   let store = null
   try {
-    const { useShuangpinStore } = require('../stores/shuangpin')
-    store = useShuangpinStore()
+    const { useAppStore } = require('../stores/app')
+    store = useAppStore()
   } catch (error) {
-    console.warn('Failed to load shuangpin store:', error)
+    console.warn('Failed to load app store:', error)
   }
   
   return {
-    currentTheme: store?.currentTheme || 'default',
-    themes: store?.themes || {},
-    changeTheme: (theme) => themeManager.changeTheme(theme),
+    currentTheme: store?.state?.currentTheme || 'default',
+    themes: store?.state?.themes || {},
+    changeTheme: (theme) => store?.changeTheme(theme),
     getCurrentTheme: () => themeManager.getCurrentTheme(),
     applyTheme: () => themeManager.applyTheme()
   }

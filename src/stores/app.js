@@ -130,16 +130,15 @@ export const useAppStore = defineStore('app', () => {
 
     // 应用CSS变量
     const root = document.documentElement
-    if (themeName === 'dark') {
-      root.setAttribute('data-theme', 'dark')
-    } else {
-      root.removeAttribute('data-theme')
-    }
+    root.setAttribute('data-theme', themeName)
 
     // 应用主题色
     Object.entries(theme.colors).forEach(([key, value]) => {
       root.style.setProperty(`--theme-${key}`, `var(--${value}-500)`)
     })
+    
+    // 触发主题变化事件
+    window.dispatchEvent(new CustomEvent('themeChange', { detail: { theme: themeName } }))
   }
 
   const updateSettings = (newSettings) => {

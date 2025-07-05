@@ -20,6 +20,39 @@
       <div class="container">
         <div class="settings-grid">
           
+          <!-- 双拼方案设置 -->
+          <div class="settings-group">
+            <h2 class="group-title">🎹 双拼方案</h2>
+            
+            <div class="setting-item">
+              <div class="setting-info">
+                <label class="setting-label">当前方案</label>
+                <p class="setting-description">选择您要使用的双拼输入方案</p>
+              </div>
+              <div class="setting-control">
+                <select v-model="shuangpinStore.currentSchemeKey" @change="handleSchemeChange" class="scheme-selector">
+                  <option v-for="scheme in shuangpinStore.availableSchemes" :key="scheme.key" :value="scheme.key">
+                    {{ scheme.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <label class="setting-label">方案详情</label>
+                <div class="scheme-details">
+                  <p class="scheme-name">{{ shuangpinStore.currentScheme.name }}</p>
+                  <p class="scheme-description">{{ shuangpinStore.currentScheme.description }}</p>
+                  <div class="scheme-stats">
+                    <span class="stat-item">作者: {{ shuangpinStore.currentScheme.author }}</span>
+                    <span class="stat-item">热度: {{ shuangpinStore.currentScheme.popularity }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 外观设置 -->
           <div class="settings-group">
             <h2 class="group-title">🎨 外观设置</h2>
@@ -174,14 +207,24 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { useShuangpinStore } from '@/stores/shuangpin'
 
 // Store
 const appStore = useAppStore()
+const shuangpinStore = useShuangpinStore()
 
 // 响应式数据
 const isLoading = ref(false)
 
 // 方法
+const handleSchemeChange = () => {
+  shuangpinStore.changeScheme(shuangpinStore.currentSchemeKey)
+  appStore.addNotification({
+    type: 'success',
+    message: `已切换到 ${shuangpinStore.currentScheme.name}`
+  })
+}
+
 const handleThemeChange = () => {
   appStore.changeTheme(appStore.state.currentTheme)
   appStore.addNotification({
@@ -260,8 +303,9 @@ const importSettings = () => {
 }
 
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   // 初始化设置页面
+  await shuangpinStore.init()
 })
 </script>
 
@@ -362,12 +406,46 @@ onMounted(() => {
   @apply ml-4;
 }
 
-.theme-selector {
+.theme-selector,
+.scheme-selector {
   @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500;
 }
 
-.app--dark .theme-selector {
+.app--dark .theme-selector,
+.app--dark .scheme-selector {
   @apply bg-gray-700 border-gray-600 text-gray-100;
+}
+
+.scheme-details {
+  @apply mt-2;
+}
+
+.scheme-name {
+  @apply font-medium text-gray-900 mb-1;
+}
+
+.app--dark .scheme-name {
+  @apply text-gray-100;
+}
+
+.scheme-description {
+  @apply text-sm text-gray-600 mb-2;
+}
+
+.app--dark .scheme-description {
+  @apply text-gray-400;
+}
+
+.scheme-stats {
+  @apply flex gap-4;
+}
+
+.stat-item {
+  @apply text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded;
+}
+
+.app--dark .stat-item {
+  @apply text-gray-400 bg-gray-700;
 }
 
 .toggle-switch {

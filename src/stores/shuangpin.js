@@ -409,6 +409,9 @@ export const useShuangpinStore = defineStore('shuangpin', {
       if (SHUANGPIN_SCHEMES[schemeKey] || this.customSchemes[schemeKey]) {
         this.currentSchemeKey = schemeKey
         
+        // 保存当前方案选择
+        localStorage.setItem('currentSchemeKey', schemeKey)
+        
         // 初始化方案进度
         if (!this.schemeProgress[schemeKey]) {
           this.schemeProgress[schemeKey] = {
@@ -418,6 +421,9 @@ export const useShuangpinStore = defineStore('shuangpin', {
             totalPractices: 0
           }
         }
+        
+        // 保存进度数据
+        localStorage.setItem('schemeProgress', JSON.stringify(this.schemeProgress))
         
         return true
       }
