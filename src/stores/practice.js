@@ -1772,6 +1772,49 @@ export const usePracticeStore = defineStore('practice', () => {
   const exportAnalyticsReport = (format, options, timeRange) => {}
   const createPersonalizedGoal = (goal) => {}
 
+  // Learning页面需要的方法
+  const getLessonById = (id) => {
+    return {
+      id: id,
+      title: `第${id}课`,
+      description: '学习双拼键位',
+      content: `课程${id}的内容`
+    }
+  }
+
+  const getLessonProgress = (id) => {
+    return state.lessonProgress[id] || 0
+  }
+
+  const getAllLessons = () => {
+    return Array.from({ length: 15 }, (_, i) => ({
+      id: i + 1,
+      title: `第${i + 1}课`,
+      description: '学习双拼键位',
+      type: i < 5 ? 'initial' : i < 10 ? 'final' : 'word'
+    }))
+  }
+
+  const getLessonStats = (id) => {
+    return {
+      totalTime: 0,
+      bestSpeed: 0,
+      averageAccuracy: 0,
+      attempts: 0
+    }
+  }
+
+  const getOverallProgress = () => {
+    const lessons = getAllLessons()
+    const totalProgress = lessons.reduce((sum, lesson) => sum + getLessonProgress(lesson.id), 0)
+    return Math.round(totalProgress / lessons.length)
+  }
+
+  const updateSettings = (newSettings) => {
+    Object.assign(state.practiceSettings, newSettings)
+    storageManager.setData('practiceSettings', state.practiceSettings)
+  }
+
   // 初始化
   const init = () => {
     loadPracticeData()
@@ -1886,6 +1929,14 @@ export const usePracticeStore = defineStore('practice', () => {
     saveAnalyticsSettings,
     exportAnalyticsReport,
     createPersonalizedGoal,
+    
+    // Learning页面需要的方法
+    getLessonById,
+    getLessonProgress,
+    getAllLessons,
+    getLessonStats,
+    getOverallProgress,
+    updateSettings,
     
     init
   }
