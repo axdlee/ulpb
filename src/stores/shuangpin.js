@@ -704,6 +704,37 @@ export const useShuangpinStore = defineStore('shuangpin', {
           }
         })
       }
+    },
+
+    // 初始化方法
+    init() {
+      // 加载已保存的设置
+      const savedScheme = localStorage.getItem('currentSchemeKey')
+      if (savedScheme && (SHUANGPIN_SCHEMES[savedScheme] || this.customSchemes[savedScheme])) {
+        this.currentSchemeKey = savedScheme
+      }
+
+      // 加载自定义方案
+      const savedCustomSchemes = localStorage.getItem('customSchemes')
+      if (savedCustomSchemes) {
+        try {
+          this.customSchemes = JSON.parse(savedCustomSchemes)
+        } catch (error) {
+          console.error('Failed to load custom schemes:', error)
+        }
+      }
+
+      // 加载学习进度
+      const savedProgress = localStorage.getItem('schemeProgress')
+      if (savedProgress) {
+        try {
+          this.schemeProgress = JSON.parse(savedProgress)
+        } catch (error) {
+          console.error('Failed to load scheme progress:', error)
+        }
+      }
+
+      return Promise.resolve()
     }
   }
 })
