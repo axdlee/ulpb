@@ -234,41 +234,197 @@ const closeUserMenu = () => {
 
 const openSettings = () => {
   closeUserMenu()
-  // TODO: 打开设置模态框
-  appStore.addNotification({
-    type: 'info',
-    message: '设置功能即将推出',
-    duration: 3000
-  })
+  router.push('/settings')
 }
 
 const exportData = () => {
   closeUserMenu()
-  // TODO: 实现数据导出
-  appStore.addNotification({
-    type: 'info',
-    message: '数据导出功能即将推出',
-    duration: 3000
-  })
+  try {
+    // 综合导出所有数据
+    const appData = appStore.exportAppData()
+    const shuangpinData = {
+      currentScheme: shuangpinStore.currentSchemeKey,
+      customSchemes: shuangpinStore.customSchemes,
+      schemeProgress: shuangpinStore.schemeProgress,
+      keyMastery: shuangpinStore.keyMastery
+    }
+    
+    const exportData = {
+      app: appData,
+      shuangpin: shuangpinData,
+      exportDate: new Date().toISOString(),
+      version: '2.0'
+    }
+    
+    const dataStr = JSON.stringify(exportData, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(dataBlob)
+    link.download = `双拼练习_完整数据_${new Date().toISOString().split('T')[0]}.json`
+    link.click()
+    
+    appStore.addNotification({
+      type: 'success',
+      message: '数据导出成功！',
+      duration: 3000
+    })
+  } catch (error) {
+    appStore.addNotification({
+      type: 'error',
+      message: '数据导出失败：' + error.message,
+      duration: 5000
+    })
+  }
 }
 
 const importData = () => {
   closeUserMenu()
-  // TODO: 实现数据导入
-  appStore.addNotification({
-    type: 'info',
-    message: '数据导入功能即将推出',
-    duration: 3000
-  })
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json'
+  
+  input.onchange = (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+    
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result)
+        
+        // 导入应用设置
+        if (data.app && appStore.importAppData(data.app)) {
+          appStore.addNotification({
+            type: 'success',
+            message: '应用设置导入成功',
+            duration: 2000
+          })
+        }
+        
+        // 导入双拼数据
+        if (data.shuangpin) {
+          if (data.shuangpin.currentScheme) {
+            shuangpinStore.changeScheme(data.shuangpin.currentScheme)
+          }
+          if (data.shuangpin.customSchemes) {
+            Object.assign(shuangpinStore.customSchemes, data.shuangpin.customSchemes)
+          }
+          if (data.shuangpin.schemeProgress) {
+            Object.assign(shuangpinStore.schemeProgress, data.shuangpin.schemeProgress)
+          }
+          if (data.shuangpin.keyMastery) {
+            Object.assign(shuangpinStore.keyMastery, data.shuangpin.keyMastery)
+          }
+          
+          // 保存双拼数据
+          localStorage.setItem('customSchemes', JSON.stringify(shuangpinStore.customSchemes))
+          localStorage.setItem('schemeProgress', JSON.stringify(shuangpinStore.schemeProgress))
+          localStorage.setItem('keyMastery', JSON.stringify(shuangpinStore.keyMastery))
+          
+          appStore.addNotification({
+            type: 'success',
+            message: '双拼数据导入成功',
+            duration: 2000
+          })
+        }
+        
+        appStore.addNotification({
+          type: 'success',
+          message: '数据导入完成！',
+          duration: 3000
+        })
+        
+      } catch (error) {
+        appStore.addNotification({
+          type: 'error',
+          message: '导入失败：文件格式错误',
+          duration: 5000
+        })
+      }
+    }
+    reader.readAsText(file)
+  }
+  
+  input.click()
 }
 
 const showAbout = () => {
   closeUserMenu()
-  appStore.addNotification({
-    type: 'info',
-    message: '双拼练习 v2.0 - 现代化双拼输入法学习应用',
-    duration: 5000
+  
+  // 创建关于信息模态框
+  const aboutContent = `
+    <div style="max-width: 500px; padding: 24px; background: white; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div style="font-size: 48px; margin-bottom: 12px;">✨</div>
+        <h2 style="margin: 0; font-size: 24px; font-weight: bold; color: #1f2937;">双拼练习大师</h2>
+        <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 14px;">现代化双拼输入法学习应用</p>
+      </div>
+      
+      <div style="space-y: 12px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+          <span style="color: #6b7280;">版本</span>
+          <span style="font-weight: 500;">v2.0.0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+          <span style="color: #6b7280;">技术栈</span>
+          <span style="font-weight: 500;">Vue 3 + Tauri + Tailwind CSS</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+          <span style="color: #6b7280;">支持方案</span>
+          <span style="font-weight: 500;">小鹤、微软、自然码等6种</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+          <span style="color: #6b7280;">开发时间</span>
+          <span style="font-weight: 500;">2025</span>
+        </div>
+      </div>
+      
+      <div style="text-align: center; color: #6b7280; font-size: 14px; line-height: 1.5;">
+        <p style="margin: 0;">感谢您使用双拼练习大师！</p>
+        <p style="margin: 8px 0 0 0;">希望这个应用能帮助您更好地学习双拼输入法。</p>
+      </div>
+      
+      <div style="text-align: center; margin-top: 20px;">
+        <button onclick="this.closest('.about-modal').remove(); document.body.style.overflow = ''" 
+                style="background: #3b82f6; color: white; padding: 8px 24px; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">
+          确定
+        </button>
+      </div>
+    </div>
+  `
+  
+  // 创建模态框背景
+  const modal = document.createElement('div')
+  modal.className = 'about-modal'
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  `
+  
+  modal.innerHTML = aboutContent
+  
+  // 点击背景关闭
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove()
+      document.body.style.overflow = ''
+    }
   })
+  
+  // 添加到页面并阻止滚动
+  document.body.appendChild(modal)
+  document.body.style.overflow = 'hidden'
 }
 
 // 响应式检测
