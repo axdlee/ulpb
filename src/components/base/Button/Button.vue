@@ -258,19 +258,19 @@ document.head.appendChild(style)
 
 /* 主要变体 */
 .btn-primary {
-  @apply bg-primary-600 border-primary-600 text-white shadow-sm;
+  @apply bg-blue-600 border-blue-600 text-white shadow-sm;
 }
 
 .btn-primary:hover:not(.btn-disabled) {
-  @apply bg-primary-700 border-primary-700;
+  @apply bg-blue-700 border-blue-700;
 }
 
 .btn-primary:focus {
-  @apply ring-primary-500;
+  @apply ring-blue-500;
 }
 
 .btn-primary:active:not(.btn-disabled) {
-  @apply bg-primary-800 border-primary-800;
+  @apply bg-blue-800 border-blue-800;
 }
 
 /* 次要变体 */
@@ -353,15 +353,15 @@ document.head.appendChild(style)
 
 /* 链接变体 */
 .btn-link {
-  @apply bg-transparent border-transparent text-primary-600 p-0 shadow-none;
+  @apply bg-transparent border-transparent text-blue-600 p-0 shadow-none;
 }
 
 .btn-link:hover:not(.btn-disabled) {
-  @apply text-primary-700 underline;
+  @apply text-blue-700 underline;
 }
 
 .btn-link:focus {
-  @apply ring-primary-500;
+  @apply ring-blue-500;
 }
 
 /* 禁用状态 */

@@ -63,7 +63,7 @@
           </div>
         </div>
 
-        <!-- 拼音提示 */
+        <!-- 拼音提示 -->
         <div class="hint-item pinyin-hint" v-if="currentPinyinHint">
           <div class="hint-icon">🎵</div>
           <div class="hint-content">
@@ -78,7 +78,7 @@
           </div>
         </div>
 
-        <!-- 进度提示 */
+        <!-- 进度提示 -->
         <div class="hint-item progress-hint" v-if="progressInfo">
           <div class="hint-icon">📊</div>
           <div class="hint-content">
@@ -179,7 +179,7 @@
       </div>
     </transition>
 
-    <!-- 快捷操作提示 */
+    <!-- 快捷操作提示 -->
     <div class="shortcut-hints" v-if="showShortcuts">
       <div class="shortcut-container">
         <div class="shortcut-title">快捷键</div>

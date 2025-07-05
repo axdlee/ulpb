@@ -5,7 +5,7 @@
 
 import { defineStore } from 'pinia'
 import { reactive, computed } from 'vue'
-import { storageManager } from '../../utils/storage.js'
+import { storageManager } from '../utils/storage.js'
 
 export const useAppStore = defineStore('app', () => {
   // 应用状态
