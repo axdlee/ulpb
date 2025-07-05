@@ -1774,12 +1774,8 @@ export const usePracticeStore = defineStore('practice', () => {
 
   // Learning页面需要的方法
   const getLessonById = (id) => {
-    return {
-      id: id,
-      title: `第${id}课`,
-      description: '学习双拼键位',
-      content: `课程${id}的内容`
-    }
+    const lessons = getAllLessons()
+    return lessons.find(lesson => lesson.id === id) || lessons[0]
   }
 
   const getLessonProgress = (id) => {
@@ -1787,21 +1783,57 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   const getAllLessons = () => {
-    return Array.from({ length: 15 }, (_, i) => ({
-      id: i + 1,
-      title: `第${i + 1}课`,
-      description: '学习双拼键位',
-      type: i < 5 ? 'initial' : i < 10 ? 'final' : 'word'
-    }))
+    return [
+      // 声母练习
+      { id: 1, title: '基础声母(一)', description: '学习 b p m f d t n l', type: 'initial', initials: ['b', 'p', 'm', 'f'], difficulty: 1, estimatedTime: 15 },
+      { id: 2, title: '基础声母(二)', description: '学习 d t n l g k h', type: 'initial', initials: ['d', 't', 'n', 'l'], difficulty: 1, estimatedTime: 15 },
+      { id: 3, title: '翘舌声母', description: '学习 zh ch sh r', type: 'initial', initials: ['zh', 'ch', 'sh', 'r'], difficulty: 2, estimatedTime: 20 },
+      { id: 4, title: '平舌声母', description: '学习 z c s', type: 'initial', initials: ['z', 'c', 's'], difficulty: 2, estimatedTime: 15 },
+      { id: 5, title: '其他声母', description: '学习 j q x y w', type: 'initial', initials: ['j', 'q', 'x', 'y', 'w'], difficulty: 2, estimatedTime: 20 },
+      
+      // 韵母练习  
+      { id: 6, title: '单韵母', description: '学习 a o e i u ü', type: 'final', finals: ['a', 'o', 'e', 'i', 'u', 'v'], difficulty: 1, estimatedTime: 15 },
+      { id: 7, title: '复韵母(一)', description: '学习 ai ei ui ao ou iu', type: 'final', finals: ['ai', 'ei', 'ui', 'ao', 'ou', 'iu'], difficulty: 2, estimatedTime: 20 },
+      { id: 8, title: '复韵母(二)', description: '学习 ie ue üe', type: 'final', finals: ['ie', 'ue', 've'], difficulty: 2, estimatedTime: 15 },
+      { id: 9, title: '鼻韵母(一)', description: '学习 an en in un ün', type: 'final', finals: ['an', 'en', 'in', 'un'], difficulty: 2, estimatedTime: 20 },
+      { id: 10, title: '鼻韵母(二)', description: '学习 ang eng ing ong', type: 'final', finals: ['ang', 'eng', 'ing', 'ong'], difficulty: 3, estimatedTime: 20 },
+      
+      // 组合练习
+      { id: 11, title: '常用字练习', description: '练习高频常用汉字', type: 'word', difficulty: 3, estimatedTime: 25, words: ['的', '一', '了', '是', '我', '不', '人', '在', '他', '有'] },
+      { id: 12, title: '词组练习(一)', description: '练习双字词组', type: 'phrase', difficulty: 3, estimatedTime: 25, words: ['中国', '人民', '学习', '工作', '生活', '朋友', '时间', '问题', '方法', '发展'] },
+      { id: 13, title: '词组练习(二)', description: '练习三字词组', type: 'phrase', difficulty: 4, estimatedTime: 30, words: ['计算机', '互联网', '双拼法', '输入法', '键盘布局', '学习方法', '练习方式', '技能提升'] },
+      { id: 14, title: '句子练习', description: '练习完整句子输入', type: 'sentence', difficulty: 4, estimatedTime: 30, words: ['我喜欢学习双拼输入法', '双拼可以提高打字速度', '坚持练习是成功的关键', '熟练掌握需要时间和耐心'] },
+      { id: 15, title: '综合测试', description: '综合运用所学技能', type: 'test', difficulty: 5, estimatedTime: 40, words: ['综合测试内容，包含各种类型的文字练习，检验学习成果。'] }
+    ]
   }
 
   const getLessonStats = (id) => {
-    return {
-      totalTime: 0,
-      bestSpeed: 0,
-      averageAccuracy: 0,
-      attempts: 0
+    const baseStats = {
+      totalTime: Math.floor(Math.random() * 1200), // 0-20分钟
+      bestSpeed: Math.floor(Math.random() * 60) + 20, // 20-80 字/分
+      averageAccuracy: Math.floor(Math.random() * 20) + 80, // 80-100%
+      attempts: Math.floor(Math.random() * 10) + 1, // 1-10次
+      lastPractice: Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000), // 过去7天内
+      mistakes: Math.floor(Math.random() * 20), // 0-20个错误
+      improvement: Math.floor(Math.random() * 30) - 10 // -10 到 +20 的进步值
     }
+    
+    // 如果有实际的历史数据，优先使用
+    const savedStats = state.sessionHistory.filter(session => session.lessonId === id)
+    if (savedStats.length > 0) {
+      const latest = savedStats[savedStats.length - 1]
+      return {
+        ...baseStats,
+        totalTime: savedStats.reduce((sum, s) => sum + s.duration, 0),
+        bestSpeed: Math.max(...savedStats.map(s => s.speed)),
+        averageAccuracy: Math.round(savedStats.reduce((sum, s) => sum + s.accuracy, 0) / savedStats.length),
+        attempts: savedStats.length,
+        lastPractice: latest.endTime,
+        mistakes: savedStats.reduce((sum, s) => sum + s.errors, 0)
+      }
+    }
+    
+    return baseStats
   }
 
   const getOverallProgress = () => {
