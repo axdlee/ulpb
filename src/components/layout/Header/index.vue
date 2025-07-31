@@ -235,7 +235,7 @@ onUnmounted(() => {
 }
 
 .brand-link {
-  @apply flex items-center space-x-3 text-decoration-none;
+  @apply flex items-center space-x-3 no-underline;
 }
 
 .brand-logo {
@@ -267,7 +267,7 @@ onUnmounted(() => {
   @apply flex items-center space-x-2 px-3 py-2 rounded-lg;
   @apply text-sm font-medium text-gray-600 hover:text-gray-900;
   @apply hover:bg-gray-100 transition-all duration-200;
-  @apply text-decoration-none;
+  @apply no-underline;
 }
 
 .nav-link--active {
@@ -361,7 +361,7 @@ onUnmounted(() => {
   @apply flex items-center space-x-3 px-3 py-3 rounded-lg;
   @apply text-base font-medium text-gray-600 hover:text-gray-900;
   @apply hover:bg-gray-100 transition-all duration-200;
-  @apply text-decoration-none;
+  @apply no-underline;
 }
 
 .mobile-nav-link--active {

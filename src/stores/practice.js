@@ -1137,6 +1137,320 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   }
 
+  // Dashboard 需要的方法
+  const loadTodayStats = async () => {
+    // 今日统计已通过计算属性实现
+    return todayStats.value
+  }
+
+  const loadRecentData = async () => {
+    // 最近数据已通过计算属性实现
+    return {
+      recentPractices: recentPractices.value,
+      recentAchievements: recentAchievements.value
+    }
+  }
+
+  const loadRecommendations = async () => {
+    // 推荐数据已通过计算属性实现
+    return practiceRecommendation.value
+  }
+
+  const refreshRecommendations = async () => {
+    // 刷新推荐逻辑
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    return practiceRecommendation.value
+  }
+
+  const loadStatsForPeriod = async (period) => {
+    // 根据时间段加载统计数据
+    return {
+      totalTime: getTotalTime(period),
+      averageSpeed: getAverageSpeed(period),
+      averageAccuracy: getAverageAccuracy(period),
+      sessionCount: getSessionCount(period)
+    }
+  }
+
+  const getCompletedLessons = (timeRange) => {
+    const sessions = getSessionsForTimeRange(timeRange)
+    const completedLessons = new Set()
+    
+    sessions.forEach(session => {
+      if (session.accuracy >= 80) {
+        completedLessons.add(session.lessonId)
+      }
+    })
+    
+    return completedLessons.size
+  }
+
+  // 辅助方法
+  const getSessionsForTimeRange = (timeRange) => {
+    const now = new Date()
+    let startDate
+
+    switch (timeRange) {
+      case 'day':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        break
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      default:
+        return state.sessionHistory
+    }
+
+    return state.sessionHistory.filter(session => 
+      new Date(session.timestamp) >= startDate
+    )
+  }
+
+  const getSessionsForPreviousPeriod = (timeRange) => {
+    const now = new Date()
+    let startDate, endDate
+
+    switch (timeRange) {
+      case 'day':
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        startDate = new Date(endDate.getTime() - 24 * 60 * 60 * 1000)
+        break
+      case 'week':
+        endDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case 'month':
+        endDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        startDate = new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1)
+        break
+      default:
+        return []
+    }
+
+    return state.sessionHistory.filter(session => {
+      const sessionDate = new Date(session.timestamp)
+      return sessionDate >= startDate && sessionDate < endDate
+    })
+  }
+
+  const getAverageSpeedForPreviousPeriod = (timeRange) => {
+    const sessions = getSessionsForPreviousPeriod(timeRange)
+    if (sessions.length === 0) return 0
+    const totalSpeed = sessions.reduce((total, session) => total + session.speed, 0)
+    return Math.round(totalSpeed / sessions.length)
+  }
+
+  const getAverageAccuracyForPreviousPeriod = (timeRange) => {
+    const sessions = getSessionsForPreviousPeriod(timeRange)
+    if (sessions.length === 0) return 0
+    const totalAccuracy = sessions.reduce((total, session) => total + session.accuracy, 0)
+    return Math.round(totalAccuracy / sessions.length)
+  }
+
+  const getSessionCountForPreviousPeriod = (timeRange) => {
+    return getSessionsForPreviousPeriod(timeRange).length
+  }
+
+  const groupSessionsByDate = (sessions) => {
+    const grouped = {}
+    sessions.forEach(session => {
+      const date = new Date(session.timestamp).toLocaleDateString()
+      if (!grouped[date]) {
+        grouped[date] = []
+      }
+      grouped[date].push(session)
+    })
+    return grouped
+  }
+
+  const getMetricLabel = (metric) => {
+    const labels = {
+      speed: '速度 (字/分)',
+      accuracy: '准确率 (%)',
+      time: '练习时长 (分钟)',
+      chars: '字符数'
+    }
+    return labels[metric] || metric
+  }
+
+  const formatDuration = (milliseconds) => {
+    const seconds = Math.floor(milliseconds / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const hours = Math.floor(minutes / 60)
+
+    if (hours > 0) {
+      return `${hours}小时${minutes % 60}分钟`
+    } else if (minutes > 0) {
+      return `${minutes}分钟${seconds % 60}秒`
+    } else {
+      return `${seconds}秒`
+    }
+  }
+
+  // 课程相关方法
+  const getAllLessons = () => {
+    // 返回所有课程列表
+    const lessons = []
+    for (let i = 1; i <= 15; i++) {
+      lessons.push({
+        id: i,
+        title: `第${i}课`,
+        description: `双拼学习第${i}课`,
+        difficulty: Math.ceil(i / 3),
+        type: i <= 5 ? 'initial' : i <= 10 ? 'final' : 'word'
+      })
+    }
+    return lessons
+  }
+
+  const getLessonById = (lessonId) => {
+    return getAllLessons().find(lesson => lesson.id === lessonId)
+  }
+
+  const getLessonProgress = (lessonId) => {
+    return state.lessonProgress[lessonId] || 0
+  }
+
+  const getLessonStats = (lessonId) => {
+    const lessonSessions = state.sessionHistory.filter(session => session.lessonId === lessonId)
+    
+    if (lessonSessions.length === 0) {
+      return {
+        progress: 0,
+        timeSpent: 0,
+        attempts: 0,
+        bestSpeed: 0,
+        bestAccuracy: 0
+      }
+    }
+
+    return {
+      progress: getLessonProgress(lessonId),
+      timeSpent: Math.round(lessonSessions.reduce((sum, s) => sum + s.duration, 0) / 60000),
+      attempts: lessonSessions.length,
+      bestSpeed: Math.max(...lessonSessions.map(s => s.speed)),
+      bestAccuracy: Math.max(...lessonSessions.map(s => s.accuracy))
+    }
+  }
+
+  const getOverallProgress = () => {
+    const totalLessons = getAllLessons().length
+    const completedCount = state.completedLessons.length
+    
+    return {
+      completedLessons: completedCount,
+      totalLessons,
+      completionRate: Math.round((completedCount / totalLessons) * 100),
+      currentLevel: userLevel.value,
+      totalTime: state.sessionHistory.reduce((sum, s) => sum + s.duration, 0),
+      totalSessions: state.sessionHistory.length
+    }
+  }
+
+  const loadLessons = async () => {
+    // 课程数据已经通过 getAllLessons 方法提供
+    return getAllLessons()
+  }
+
+  // 初始化方法
+  const init = async () => {
+    try {
+      loadPracticeData()
+      await loadRecentSessions()
+      
+      // 初始化核心引擎
+      globalTypingEngine.init()
+      globalLearningSystem.init()
+      globalAnalyticsEngine.init()
+      globalAchievementSystem.init()
+      
+      return true
+    } catch (error) {
+      console.error('Practice store initialization failed:', error)
+      appStore.addError(error)
+      return false
+    }
+  }
+
+  return {
+    // 状态
+    state,
+    
+    // 计算属性
+    currentSessionStats,
+    currentStats,
+    todayStats,
+    overallStats,
+    practiceRecommendation,
+    learningStreak,
+    userLevel,
+    recentPractices,
+    recentAchievements,
+    upcomingAchievements,
+    currentLessonProgress,
+    dailyPracticeProgress,
+    
+    // 核心方法
+    startPractice,
+    pausePractice,
+    resumePractice,
+    stopPractice,
+    restartPractice,
+    exitPractice,
+    processKeyInput,
+    handleKeyPress,
+    
+    // 设置方法
+    updatePracticeSettings,
+    setCurrentLesson,
+    updateLessonProgress,
+    
+    // 数据方法
+    exportPracticeData,
+    importPracticeData,
+    resetPracticeData,
+    
+    // 统计方法
+    getTotalTime,
+    getAverageSpeed,
+    getAverageAccuracy,
+    getSessionCount,
+    getCompletedLessons,
+    getTimeTrend,
+    getSpeedTrend,
+    getAccuracyTrend,
+    getSessionTrend,
+    getProgressChartData,
+    getSpeedAccuracyData,
+    getKeyErrorData,
+    getTimeDistributionData,
+    getPracticeRecords,
+    filterRecords,
+    
+    // Dashboard 方法
+    loadTodayStats,
+    loadRecentData,
+    loadRecommendations,
+    refreshRecommendations,
+    loadStatsForPeriod,
+    
+    // 课程方法
+    getAllLessons,
+    getLessonById,
+    getLessonProgress,
+    getLessonStats,
+    getOverallProgress,
+    loadLessons,
+    
+    // 初始化
+    init
+  }
+    }
+  }
+
   const sortRecords = (records, sortBy, sortOrder) => {
     return [...records].sort((a, b) => {
       let aVal = a[sortBy]
