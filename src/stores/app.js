@@ -13,7 +13,7 @@ export const useAppStore = defineStore('app', () => {
     // 应用信息
     version: '2.0.0',
     name: '双拼学习大师',
-    
+
     // 主题设置
     currentTheme: 'default',
     themes: {
@@ -29,7 +29,7 @@ export const useAppStore = defineStore('app', () => {
         name: '暗黑主题',
         colors: {
           primary: 'blue',
-          secondary: 'indigo', 
+          secondary: 'indigo',
           accent: 'purple'
         }
       },
@@ -58,7 +58,7 @@ export const useAppStore = defineStore('app', () => {
         }
       }
     },
-    
+
     // 用户设置
     settings: {
       // 界面设置
@@ -66,37 +66,37 @@ export const useAppStore = defineStore('app', () => {
       autoSave: true,
       showAnimations: true,
       showNotifications: true,
-      
+
       // 练习设置
       soundEnabled: true,
       showPinyin: true,
       showHint: true,
       showKeyboard: true,
-      
+
       // 难度设置
       difficulty: 'adaptive',
       practiceMode: 'guided',
-      
+
       // 统计设置
       trackDetailedStats: true,
       shareAnonymousData: false,
-      
+
       // 隐私设置
       rememberProgress: true,
       cloudSync: false
     },
-    
+
     // 应用状态
     isLoading: false,
     isOnline: navigator.onLine,
     lastSyncTime: null,
-    
+
     // 错误状态
     errors: [],
-    
+
     // 通知状态
     notifications: [],
-    
+
     // 调试模式
     debugMode: false
   })
@@ -107,8 +107,10 @@ export const useAppStore = defineStore('app', () => {
   })
 
   const isDarkMode = computed(() => {
-    return state.currentTheme === 'dark' || 
-           (state.currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    return (
+      state.currentTheme === 'dark' ||
+      (state.currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    )
   })
 
   const isProductionMode = computed(() => {
@@ -116,7 +118,7 @@ export const useAppStore = defineStore('app', () => {
   })
 
   // 动作方法
-  const changeTheme = (themeName) => {
+  const changeTheme = themeName => {
     if (state.themes[themeName]) {
       state.currentTheme = themeName
       applyTheme(themeName)
@@ -124,7 +126,7 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  const applyTheme = (themeName) => {
+  const applyTheme = themeName => {
     const theme = state.themes[themeName]
     if (!theme) return
 
@@ -136,12 +138,12 @@ export const useAppStore = defineStore('app', () => {
     Object.entries(theme.colors).forEach(([key, value]) => {
       root.style.setProperty(`--theme-${key}`, `var(--${value}-500)`)
     })
-    
+
     // 触发主题变化事件
     window.dispatchEvent(new CustomEvent('themeChange', { detail: { theme: themeName } }))
   }
 
-  const updateSettings = (newSettings) => {
+  const updateSettings = newSettings => {
     Object.assign(state.settings, newSettings)
     saveSettings()
   }
@@ -162,24 +164,24 @@ export const useAppStore = defineStore('app', () => {
 
   const loadSettings = () => {
     const savedData = storageManager.getData('appSettings', {})
-    
+
     if (savedData.currentTheme) {
       state.currentTheme = savedData.currentTheme
     }
-    
+
     if (savedData.settings) {
       Object.assign(state.settings, savedData.settings)
     }
-    
+
     // 应用已保存的主题
     applyTheme(state.currentTheme)
   }
 
-  const setLoading = (loading) => {
+  const setLoading = loading => {
     state.isLoading = loading
   }
 
-  const addError = (error) => {
+  const addError = error => {
     const errorObj = {
       id: Date.now(),
       message: error.message || error,
@@ -187,14 +189,14 @@ export const useAppStore = defineStore('app', () => {
       type: error.type || 'error',
       stack: error.stack
     }
-    
+
     state.errors.unshift(errorObj)
-    
+
     // 只保留最近20个错误
     if (state.errors.length > 20) {
       state.errors = state.errors.slice(0, 20)
     }
-    
+
     // 如果开启通知，显示错误通知
     if (state.settings.showNotifications) {
       addNotification({
@@ -210,7 +212,7 @@ export const useAppStore = defineStore('app', () => {
     state.errors = []
   }
 
-  const addNotification = (notification) => {
+  const addNotification = notification => {
     const notificationObj = {
       id: Date.now(),
       type: notification.type || 'info',
@@ -220,23 +222,23 @@ export const useAppStore = defineStore('app', () => {
       timestamp: Date.now(),
       persistent: notification.persistent || false
     }
-    
+
     state.notifications.unshift(notificationObj)
-    
+
     // 自动移除非持久通知
     if (!notificationObj.persistent && notificationObj.duration > 0) {
       setTimeout(() => {
         removeNotification(notificationObj.id)
       }, notificationObj.duration)
     }
-    
+
     // 只保留最近10个通知
     if (state.notifications.length > 10) {
       state.notifications = state.notifications.slice(0, 10)
     }
   }
 
-  const removeNotification = (id) => {
+  const removeNotification = id => {
     const index = state.notifications.findIndex(n => n.id === id)
     if (index > -1) {
       state.notifications.splice(index, 1)
@@ -270,22 +272,22 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  const importAppData = (data) => {
+  const importAppData = data => {
     try {
       if (data.settings) {
         updateSettings(data.settings)
       }
-      
+
       if (data.theme) {
         changeTheme(data.theme)
       }
-      
+
       addNotification({
         type: 'success',
         title: '导入成功',
         message: '应用设置已成功导入'
       })
-      
+
       return true
     } catch (error) {
       addError(error)
@@ -312,17 +314,17 @@ export const useAppStore = defineStore('app', () => {
       rememberProgress: true,
       cloudSync: false
     }
-    
+
     // 清除所有状态
     state.errors = []
     state.notifications = []
-    
+
     // 保存重置后的设置
     saveSettings()
-    
+
     // 应用默认主题
     applyTheme('default')
-    
+
     addNotification({
       type: 'info',
       title: '重置完成',
@@ -333,23 +335,23 @@ export const useAppStore = defineStore('app', () => {
   // 初始化
   const init = () => {
     loadSettings()
-    
+
     // 监听在线状态变化
     window.addEventListener('online', updateOnlineStatus)
     window.addEventListener('offline', updateOnlineStatus)
-    
+
     // 监听系统主题变化
     if (window.matchMedia) {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      mediaQuery.addEventListener('change', (e) => {
+      mediaQuery.addEventListener('change', e => {
         if (state.currentTheme === 'auto') {
           applyTheme('auto')
         }
       })
     }
-    
+
     // 全局错误处理
-    window.addEventListener('error', (event) => {
+    window.addEventListener('error', event => {
       addError({
         message: event.message,
         filename: event.filename,
@@ -358,8 +360,8 @@ export const useAppStore = defineStore('app', () => {
         type: 'javascript'
       })
     })
-    
-    window.addEventListener('unhandledrejection', (event) => {
+
+    window.addEventListener('unhandledrejection', event => {
       addError({
         message: event.reason?.message || 'Promise rejection',
         type: 'promise'
@@ -370,12 +372,12 @@ export const useAppStore = defineStore('app', () => {
   return {
     // 状态
     state,
-    
+
     // 计算属性
     currentThemeConfig,
     isDarkMode,
     isProductionMode,
-    
+
     // 方法
     changeTheme,
     updateSettings,

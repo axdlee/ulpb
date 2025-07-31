@@ -14,7 +14,7 @@ import { useAppStore } from './app.js'
 
 export const usePracticeStore = defineStore('practice', () => {
   const appStore = useAppStore()
-  
+
   // 练习状态
   const state = reactive({
     // 当前练习
@@ -22,13 +22,13 @@ export const usePracticeStore = defineStore('practice', () => {
     isActive: false,
     isPaused: false,
     isCompleted: false,
-    
+
     // 练习内容
     currentLesson: null,
     practiceText: [],
     currentIndex: 0,
     totalChars: 0,
-    
+
     // 实时输入状态
     currentCharacter: '',
     currentPinyin: '',
@@ -36,31 +36,31 @@ export const usePracticeStore = defineStore('practice', () => {
     targetKeys: [],
     pressedKeys: [],
     errorKeys: [],
-    
+
     // 实时统计
     startTime: null,
     elapsedTime: 0,
     currentSpeed: 0,
     currentAccuracy: 0,
     currentErrors: 0,
-    
+
     // 输入反馈
     inputFeedback: {
       type: 'info',
       message: '准备开始练习',
       hint: ''
     },
-    
+
     // 练习历史
     sessionHistory: [],
     recentSessions: [],
     sessionResults: null,
-    
+
     // 课程进度
     lessonProgress: {},
     completedLessons: [],
     currentLessonId: null,
-    
+
     // 练习设置
     practiceSettings: {
       mode: 'guided', // 'guided' | 'free' | 'test' | 'game'
@@ -73,12 +73,12 @@ export const usePracticeStore = defineStore('practice', () => {
       targetSpeed: 0, // 0 = no target
       targetAccuracy: 95
     },
-    
+
     // 错误分析
     errorPatterns: {},
     weakKeys: [],
     strongKeys: [],
-    
+
     // 成就和里程碑
     newAchievements: [],
     milestones: []
@@ -86,11 +86,11 @@ export const usePracticeStore = defineStore('practice', () => {
 
   // 定时器引用
   const updateTimer = ref(null)
-  
+
   // 计算属性
   const currentSessionStats = computed(() => {
     if (!state.currentSession) return null
-    
+
     return globalTypingEngine.getCurrentState()
   })
 
@@ -108,7 +108,7 @@ export const usePracticeStore = defineStore('practice', () => {
     const todaySessions = state.sessionHistory.filter(session => {
       return new Date(session.timestamp).toDateString() === today
     })
-    
+
     if (todaySessions.length === 0) {
       return {
         sessions: 0,
@@ -120,14 +120,18 @@ export const usePracticeStore = defineStore('practice', () => {
         bestAccuracy: 0
       }
     }
-    
+
     const totalTime = todaySessions.reduce((sum, s) => sum + s.duration, 0)
     const totalChars = todaySessions.reduce((sum, s) => sum + s.totalCharacters, 0)
-    const avgSpeed = Math.round(todaySessions.reduce((sum, s) => sum + s.speed, 0) / todaySessions.length)
-    const avgAccuracy = Math.round(todaySessions.reduce((sum, s) => sum + s.accuracy, 0) / todaySessions.length)
+    const avgSpeed = Math.round(
+      todaySessions.reduce((sum, s) => sum + s.speed, 0) / todaySessions.length
+    )
+    const avgAccuracy = Math.round(
+      todaySessions.reduce((sum, s) => sum + s.accuracy, 0) / todaySessions.length
+    )
     const bestSpeed = Math.max(...todaySessions.map(s => s.speed))
     const bestAccuracy = Math.max(...todaySessions.map(s => s.accuracy))
-    
+
     return {
       sessions: todaySessions.length,
       totalTime,
@@ -152,15 +156,17 @@ export const usePracticeStore = defineStore('practice', () => {
         currentStreak: 0
       }
     }
-    
+
     const sessions = state.sessionHistory
     const totalTime = sessions.reduce((sum, s) => sum + s.duration, 0)
     const totalChars = sessions.reduce((sum, s) => sum + s.totalCharacters, 0)
     const avgSpeed = Math.round(sessions.reduce((sum, s) => sum + s.speed, 0) / sessions.length)
-    const avgAccuracy = Math.round(sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length)
+    const avgAccuracy = Math.round(
+      sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length
+    )
     const bestSpeed = Math.max(...sessions.map(s => s.speed))
     const bestAccuracy = Math.max(...sessions.map(s => s.accuracy))
-    
+
     return {
       totalSessions: sessions.length,
       totalTime,
@@ -180,33 +186,33 @@ export const usePracticeStore = defineStore('practice', () => {
   // Dashboard相关计算属性
   const learningStreak = computed(() => {
     if (state.sessionHistory.length === 0) return 0
-    
+
     const today = new Date()
     let streak = 0
-    
+
     for (let i = 0; i < 30; i++) {
       const checkDate = new Date(today)
       checkDate.setDate(today.getDate() - i)
       const dateStr = checkDate.toDateString()
-      
+
       const hasSessionOnDate = state.sessionHistory.some(session => {
         return new Date(session.timestamp).toDateString() === dateStr
       })
-      
+
       if (hasSessionOnDate) {
         streak++
       } else if (i > 0) {
         break
       }
     }
-    
+
     return streak
   })
 
   const userLevel = computed(() => {
     const totalTime = state.sessionHistory.reduce((sum, s) => sum + s.duration, 0)
     const hours = totalTime / (1000 * 60 * 60)
-    
+
     if (hours < 2) return 1
     if (hours < 5) return 2
     if (hours < 10) return 3
@@ -248,7 +254,7 @@ export const usePracticeStore = defineStore('practice', () => {
     const upcoming = []
     const currentSpeed = overallStats.value.averageSpeed
     const currentAccuracy = overallStats.value.averageAccuracy
-    
+
     if (currentSpeed > 0 && currentSpeed < 30) {
       upcoming.push({
         id: 'speed-30',
@@ -258,7 +264,7 @@ export const usePracticeStore = defineStore('practice', () => {
         progress: Math.round((currentSpeed / 30) * 100)
       })
     }
-    
+
     if (currentAccuracy > 0 && currentAccuracy < 95) {
       upcoming.push({
         id: 'accuracy-95',
@@ -268,7 +274,7 @@ export const usePracticeStore = defineStore('practice', () => {
         progress: Math.round((currentAccuracy / 95) * 100)
       })
     }
-    
+
     return upcoming
   })
 
@@ -289,13 +295,13 @@ export const usePracticeStore = defineStore('practice', () => {
       if (state.isActive) {
         stopPractice()
       }
-      
+
       // 设置当前课程
       state.currentLessonId = lessonId
       state.practiceText = Array.isArray(practiceText) ? practiceText : practiceText.split('')
       state.currentIndex = 0
       state.totalChars = state.practiceText.length
-      
+
       // 重置状态
       state.isCompleted = false
       state.sessionResults = null
@@ -303,22 +309,22 @@ export const usePracticeStore = defineStore('practice', () => {
       state.currentSpeed = 0
       state.currentAccuracy = 100
       state.elapsedTime = 0
-      
+
       // 初始化输入状态
       state.inputState = 'waiting'
       state.targetKeys = []
       state.pressedKeys = []
       state.errorKeys = []
-      
+
       // 设置第一个字符
       updateCurrentCharacter()
-      
+
       // 启动打字引擎
       const result = globalTypingEngine.start(state.practiceText)
       if (!result.success) {
         throw new Error(result.message)
       }
-      
+
       // 更新状态
       state.isActive = true
       state.isPaused = false
@@ -329,24 +335,24 @@ export const usePracticeStore = defineStore('practice', () => {
         startTime: state.startTime,
         practiceText: state.practiceText
       }
-      
+
       // 更新输入反馈
       state.inputFeedback = {
         type: 'info',
         message: '开始练习',
         hint: `请输入: ${state.currentCharacter}`
       }
-      
+
       // 开始统计更新
       startStatsUpdate()
-      
+
       appStore.addNotification({
         type: 'info',
         title: '练习开始',
         message: '开始新的练习会话',
         duration: 2000
       })
-      
+
       return result
     } catch (error) {
       appStore.addError(error)
@@ -356,11 +362,11 @@ export const usePracticeStore = defineStore('practice', () => {
 
   const pausePractice = () => {
     if (!state.isActive || state.isPaused) return
-    
+
     globalTypingEngine.pause()
     state.isPaused = true
     stopStatsUpdate()
-    
+
     appStore.addNotification({
       type: 'info',
       title: '练习暂停',
@@ -370,11 +376,11 @@ export const usePracticeStore = defineStore('practice', () => {
 
   const resumePractice = () => {
     if (!state.isActive || !state.isPaused) return
-    
+
     globalTypingEngine.resume()
     state.isPaused = false
     startStatsUpdate()
-    
+
     appStore.addNotification({
       type: 'info',
       title: '练习继续',
@@ -384,32 +390,31 @@ export const usePracticeStore = defineStore('practice', () => {
 
   const stopPractice = async () => {
     if (!state.isActive) return
-    
+
     try {
       // 停止引擎并获取结果
       const sessionResult = globalTypingEngine.stop()
-      
+
       // 更新状态
       state.isActive = false
       state.isPaused = false
       state.isCompleted = true
-      
+
       // 保存会话结果
       state.sessionResults = sessionResult
-      
+
       // 停止统计更新
       stopStatsUpdate()
-      
+
       // 保存到历史记录
       await savePracticeSession(sessionResult)
-      
+
       // 显示完成通知
       appStore.addNotification({
         type: 'success',
         title: '练习完成',
         message: `速度: ${sessionResult.speed} 字/分, 准确率: ${sessionResult.accuracy}%`
       })
-      
     } catch (error) {
       console.error('停止练习失败:', error)
       appStore.addError(error)
@@ -419,13 +424,13 @@ export const usePracticeStore = defineStore('practice', () => {
   // 重新开始练习
   const restartPractice = async () => {
     if (!state.currentLesson) return
-    
+
     try {
       // 停止当前练习
       if (state.isActive) {
         await stopPractice()
       }
-      
+
       // 重置状态
       state.currentIndex = 0
       state.elapsedTime = 0
@@ -434,10 +439,9 @@ export const usePracticeStore = defineStore('practice', () => {
       state.currentErrors = 0
       state.isCompleted = false
       state.sessionResults = null
-      
+
       // 重新开始
       await startPractice(state.currentLessonId, state.practiceText)
-      
     } catch (error) {
       console.error('重新开始练习失败:', error)
       appStore.addError(error)
@@ -450,7 +454,7 @@ export const usePracticeStore = defineStore('practice', () => {
       if (state.isActive) {
         await stopPractice()
       }
-      
+
       // 重置状态
       state.currentSession = null
       state.isActive = false
@@ -460,14 +464,13 @@ export const usePracticeStore = defineStore('practice', () => {
       state.practiceText = []
       state.currentIndex = 0
       state.sessionResults = null
-      
+
       // 更新输入反馈
       state.inputFeedback = {
         type: 'info',
         message: '练习已退出',
         hint: ''
       }
-      
     } catch (error) {
       console.error('退出练习失败:', error)
       appStore.addError(error)
@@ -475,29 +478,29 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   // 处理键盘输入
-  const processKeyInput = (key) => {
+  const processKeyInput = key => {
     if (!state.isActive || state.isPaused) return
-    
+
     try {
       // 更新按键状态
       state.pressedKeys = [key]
-      
+
       // 获取当前字符
       const currentChar = state.practiceText[state.currentIndex]
       if (!currentChar) return
-      
+
       // 检查输入是否正确
       const isCorrect = key === currentChar
-      
+
       if (isCorrect) {
         // 正确输入
         state.inputState = 'correct'
         state.currentIndex++
         state.errorKeys = []
-        
+
         // 更新当前字符
         updateCurrentCharacter()
-        
+
         // 更新反馈
         state.inputFeedback = {
           type: 'success',
@@ -509,7 +512,7 @@ export const usePracticeStore = defineStore('practice', () => {
         state.inputState = 'error'
         state.currentErrors++
         state.errorKeys = [key]
-        
+
         // 更新反馈
         state.inputFeedback = {
           type: 'error',
@@ -517,17 +520,16 @@ export const usePracticeStore = defineStore('practice', () => {
           hint: `您输入了 "${key}"`
         }
       }
-      
+
       // 检查是否完成
       if (state.currentIndex >= state.practiceText.length) {
         setTimeout(() => {
           stopPractice()
         }, 500)
       }
-      
+
       // 更新统计
       updateStats()
-      
     } catch (error) {
       console.error('处理键盘输入失败:', error)
       appStore.addError(error)
@@ -540,14 +542,14 @@ export const usePracticeStore = defineStore('practice', () => {
       state.currentCharacter = state.practiceText[state.currentIndex]
       // 这里可以添加获取拼音的逻辑
       state.currentPinyin = getPinyinForCharacter(state.currentCharacter)
-      
+
       // 更新目标键位
       updateTargetKeys()
     }
   }
 
   // 获取字符拼音
-  const getPinyinForCharacter = (char) => {
+  const getPinyinForCharacter = char => {
     // 这里可以集成拼音库或使用简单映射
     return char // 临时返回字符本身
   }
@@ -561,15 +563,15 @@ export const usePracticeStore = defineStore('practice', () => {
   // 更新统计数据
   const updateStats = () => {
     if (!state.startTime) return
-    
+
     const now = Date.now()
     state.elapsedTime = now - state.startTime
-    
+
     if (state.currentIndex > 0) {
       // 计算速度 (字符/分钟)
       const minutes = state.elapsedTime / (1000 * 60)
       state.currentSpeed = Math.round(state.currentIndex / minutes)
-      
+
       // 计算准确率
       const totalAttempts = state.currentIndex + state.currentErrors
       state.currentAccuracy = Math.round((state.currentIndex / totalAttempts) * 100)
@@ -577,7 +579,7 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   // 获取课程数据
-  const getLesson = async (lessonId) => {
+  const getLesson = async lessonId => {
     try {
       // 这里应该从课程数据中获取
       // 临时返回示例数据
@@ -608,7 +610,7 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   // 保存练习会话
-  const savePracticeSession = async (sessionResult) => {
+  const savePracticeSession = async sessionResult => {
     try {
       const session = {
         id: Date.now(),
@@ -621,20 +623,19 @@ export const usePracticeStore = defineStore('practice', () => {
         totalCharacters: state.practiceText.length,
         score: calculateScore(sessionResult)
       }
-      
+
       // 添加到历史记录
       state.sessionHistory.push(session)
       state.recentSessions.unshift(session)
-      
+
       // 只保留最近20个记录
       if (state.recentSessions.length > 20) {
         state.recentSessions = state.recentSessions.slice(0, 20)
       }
-      
+
       // 保存到存储
       storageManager.setData('sessionHistory', state.sessionHistory)
       storageManager.setData('recentSessions', state.recentSessions)
-      
     } catch (error) {
       console.error('保存练习会话失败:', error)
       appStore.addError(error)
@@ -642,30 +643,30 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   // 计算分数
-  const calculateScore = (sessionResult) => {
+  const calculateScore = sessionResult => {
     const speed = sessionResult.speed || state.currentSpeed
     const accuracy = sessionResult.accuracy || state.currentAccuracy
-    
+
     // 简单的分数计算公式
     return Math.round((speed * accuracy) / 100)
   }
 
-  const handleKeyPress = (key) => {
+  const handleKeyPress = key => {
     if (!state.isActive || state.isPaused) return
-    
+
     try {
       const result = globalTypingEngine.handleKeyPress(key)
-      
+
       // 更新当前位置
       if (result.completed) {
         state.currentIndex++
       }
-      
+
       // 播放声音反馈
       if (state.practiceSettings.enableSound) {
         playKeySound(result.isCorrect)
       }
-      
+
       return result
     } catch (error) {
       appStore.addError(error)
@@ -673,22 +674,22 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   }
 
-  const updatePracticeSettings = (newSettings) => {
+  const updatePracticeSettings = newSettings => {
     Object.assign(state.practiceSettings, newSettings)
     savePracticeData()
   }
 
-  const setCurrentLesson = (lesson) => {
+  const setCurrentLesson = lesson => {
     state.currentLesson = lesson
     state.currentLessonId = lesson?.id
   }
 
   const updateLessonProgress = (lessonId, progress) => {
     state.lessonProgress[lessonId] = progress
-    
+
     if (progress >= 100 && !state.completedLessons.includes(lessonId)) {
       state.completedLessons.push(lessonId)
-      
+
       appStore.addNotification({
         type: 'success',
         title: '课程完成',
@@ -696,7 +697,7 @@ export const usePracticeStore = defineStore('practice', () => {
         duration: 4000
       })
     }
-    
+
     savePracticeData()
   }
 
@@ -716,16 +717,16 @@ export const usePracticeStore = defineStore('practice', () => {
 
   const updateRealTimeStats = () => {
     if (!state.isActive || state.isPaused) return
-    
+
     const stats = globalTypingEngine.getCurrentState()
-    
+
     state.elapsedTime = Math.round((Date.now() - state.startTime) / 1000)
     state.currentSpeed = stats.currentSpeed
     state.currentAccuracy = stats.currentAccuracy
     state.currentErrors = stats.errors.length
   }
 
-  const processPracticeResult = async (sessionResult) => {
+  const processPracticeResult = async sessionResult => {
     // 添加时间戳和会话ID
     const processedResult = {
       ...sessionResult,
@@ -734,11 +735,11 @@ export const usePracticeStore = defineStore('practice', () => {
       lessonId: state.currentLessonId,
       practiceMode: state.practiceSettings.mode
     }
-    
+
     // 添加到历史记录
     state.sessionHistory.unshift(processedResult)
     state.recentSessions.unshift(processedResult)
-    
+
     // 限制历史记录数量
     if (state.sessionHistory.length > 1000) {
       state.sessionHistory = state.sessionHistory.slice(0, 1000)
@@ -746,44 +747,44 @@ export const usePracticeStore = defineStore('practice', () => {
     if (state.recentSessions.length > 50) {
       state.recentSessions = state.recentSessions.slice(0, 50)
     }
-    
+
     // 更新分析引擎
     globalAnalyticsEngine.addSession(processedResult)
-    
+
     // 更新学习系统
     const userStats = overallStats.value
     const learningResult = globalLearningSystem.analyzePerformance(processedResult, userStats)
-    
+
     // 检查成就
     const newAchievements = globalAchievementSystem.checkAchievements(processedResult, userStats)
     if (newAchievements.length > 0) {
       state.newAchievements.push(...newAchievements)
     }
-    
+
     // 更新错误模式分析
     updateErrorAnalysis(sessionResult.errors)
-    
+
     // 更新课程进度
     if (state.currentLessonId) {
       updateLessonProgress(state.currentLessonId, calculateLessonProgress(sessionResult))
     }
-    
+
     // 保存数据
     savePracticeData()
   }
 
-  const updateErrorAnalysis = (errors) => {
+  const updateErrorAnalysis = errors => {
     errors.forEach(error => {
       const pattern = `${error.expected}->${error.actual}`
       state.errorPatterns[pattern] = (state.errorPatterns[pattern] || 0) + 1
     })
-    
+
     // 分析弱键位
     const keyErrors = {}
     errors.forEach(error => {
       keyErrors[error.expected] = (keyErrors[error.expected] || 0) + 1
     })
-    
+
     // 更新弱键位列表
     state.weakKeys = Object.entries(keyErrors)
       .filter(([, count]) => count >= 3)
@@ -792,53 +793,55 @@ export const usePracticeStore = defineStore('practice', () => {
       .map(([key]) => key)
   }
 
-  const calculateLessonProgress = (sessionResult) => {
+  const calculateLessonProgress = sessionResult => {
     // 基于准确率和完成度计算进度
     const accuracy = sessionResult.accuracy
-    const completion = sessionResult.completed ? 100 : (sessionResult.correctCharacters / sessionResult.totalCharacters) * 100
-    
-    return Math.round((accuracy * 0.6 + completion * 0.4))
+    const completion = sessionResult.completed
+      ? 100
+      : (sessionResult.correctCharacters / sessionResult.totalCharacters) * 100
+
+    return Math.round(accuracy * 0.6 + completion * 0.4)
   }
 
   const calculateCurrentStreak = () => {
     const sessions = state.sessionHistory
     if (sessions.length === 0) return 0
-    
+
     let streak = 0
     const today = new Date()
-    
+
     for (let i = 0; i < sessions.length; i++) {
       const sessionDate = new Date(sessions[i].timestamp)
       const daysDiff = Math.floor((today - sessionDate) / (1000 * 60 * 60 * 24))
-      
+
       if (daysDiff === streak) {
         streak++
       } else {
         break
       }
     }
-    
+
     return streak
   }
 
-  const playKeySound = (isCorrect) => {
+  const playKeySound = isCorrect => {
     if (!state.practiceSettings.enableSound) return
-    
+
     // 创建音频上下文播放按键声音
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)()
       const oscillator = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
-      
+
       oscillator.connect(gainNode)
       gainNode.connect(audioContext.destination)
-      
+
       oscillator.frequency.setValueAtTime(isCorrect ? 800 : 400, audioContext.currentTime)
       oscillator.type = 'sine'
-      
+
       gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1)
-      
+
       oscillator.start(audioContext.currentTime)
       oscillator.stop(audioContext.currentTime + 0.1)
     } catch (error) {
@@ -857,13 +860,13 @@ export const usePracticeStore = defineStore('practice', () => {
       weakKeys: state.weakKeys,
       strongKeys: state.strongKeys
     }
-    
+
     storageManager.setData('practiceData', dataToSave)
   }
 
   const loadPracticeData = () => {
     const savedData = storageManager.getData('practiceData', {})
-    
+
     if (savedData.sessionHistory) {
       state.sessionHistory = savedData.sessionHistory
     }
@@ -901,7 +904,7 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   }
 
-  const importPracticeData = (data) => {
+  const importPracticeData = data => {
     try {
       if (data.sessionHistory) {
         state.sessionHistory = data.sessionHistory
@@ -915,15 +918,15 @@ export const usePracticeStore = defineStore('practice', () => {
       if (data.practiceSettings) {
         Object.assign(state.practiceSettings, data.practiceSettings)
       }
-      
+
       savePracticeData()
-      
+
       appStore.addNotification({
         type: 'success',
         title: '导入成功',
         message: '练习数据已成功导入'
       })
-      
+
       return true
     } catch (error) {
       appStore.addError(error)
@@ -940,9 +943,9 @@ export const usePracticeStore = defineStore('practice', () => {
     state.weakKeys = []
     state.strongKeys = []
     state.newAchievements = []
-    
+
     savePracticeData()
-    
+
     appStore.addNotification({
       type: 'info',
       title: '数据重置',
@@ -951,53 +954,53 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   // Stats页面需要的方法
-  const getTotalTime = (timeRange) => {
+  const getTotalTime = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     return sessions.reduce((total, session) => total + session.duration, 0)
   }
 
-  const getAverageSpeed = (timeRange) => {
+  const getAverageSpeed = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     if (sessions.length === 0) return 0
     const totalSpeed = sessions.reduce((total, session) => total + session.speed, 0)
     return Math.round(totalSpeed / sessions.length)
   }
 
-  const getAverageAccuracy = (timeRange) => {
+  const getAverageAccuracy = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     if (sessions.length === 0) return 0
     const totalAccuracy = sessions.reduce((total, session) => total + session.accuracy, 0)
     return Math.round(totalAccuracy / sessions.length)
   }
 
-  const getSessionCount = (timeRange) => {
+  const getSessionCount = timeRange => {
     return getSessionsForTimeRange(timeRange).length
   }
 
-  const getTimeTrend = (timeRange) => {
+  const getTimeTrend = timeRange => {
     // 计算时间趋势 (与上一期对比)
     const currentSessions = getSessionsForTimeRange(timeRange)
     const previousSessions = getSessionsForPreviousPeriod(timeRange)
-    
+
     const currentTotal = currentSessions.reduce((total, session) => total + session.duration, 0)
     const previousTotal = previousSessions.reduce((total, session) => total + session.duration, 0)
-    
+
     return currentTotal - previousTotal
   }
 
-  const getSpeedTrend = (timeRange) => {
+  const getSpeedTrend = timeRange => {
     const currentAvg = getAverageSpeed(timeRange)
     const previousAvg = getAverageSpeedForPreviousPeriod(timeRange)
     return currentAvg - previousAvg
   }
 
-  const getAccuracyTrend = (timeRange) => {
+  const getAccuracyTrend = timeRange => {
     const currentAvg = getAverageAccuracy(timeRange)
     const previousAvg = getAverageAccuracyForPreviousPeriod(timeRange)
     return currentAvg - previousAvg
   }
 
-  const getSessionTrend = (timeRange) => {
+  const getSessionTrend = timeRange => {
     const currentCount = getSessionCount(timeRange)
     const previousCount = getSessionCountForPreviousPeriod(timeRange)
     return currentCount - previousCount
@@ -1005,76 +1008,82 @@ export const usePracticeStore = defineStore('practice', () => {
 
   const getProgressChartData = (timeRange, metric) => {
     const sessions = getSessionsForTimeRange(timeRange)
-    
+
     // 按日期分组
     const groupedData = groupSessionsByDate(sessions)
-    
+
     return {
       labels: Object.keys(groupedData),
-      datasets: [{
-        label: getMetricLabel(metric),
-        data: Object.values(groupedData).map(daySessions => {
-          if (metric === 'speed') {
-            return daySessions.reduce((sum, s) => sum + s.speed, 0) / daySessions.length
-          } else if (metric === 'accuracy') {
-            return daySessions.reduce((sum, s) => sum + s.accuracy, 0) / daySessions.length
-          } else if (metric === 'time') {
-            return daySessions.reduce((sum, s) => sum + s.duration, 0) / 60000 // 转换为分钟
-          } else if (metric === 'chars') {
-            return daySessions.reduce((sum, s) => sum + s.totalCharacters, 0)
-          }
-          return 0
-        }),
-        borderColor: '#3B82F6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.4
-      }]
+      datasets: [
+        {
+          label: getMetricLabel(metric),
+          data: Object.values(groupedData).map(daySessions => {
+            if (metric === 'speed') {
+              return daySessions.reduce((sum, s) => sum + s.speed, 0) / daySessions.length
+            } else if (metric === 'accuracy') {
+              return daySessions.reduce((sum, s) => sum + s.accuracy, 0) / daySessions.length
+            } else if (metric === 'time') {
+              return daySessions.reduce((sum, s) => sum + s.duration, 0) / 60000 // 转换为分钟
+            } else if (metric === 'chars') {
+              return daySessions.reduce((sum, s) => sum + s.totalCharacters, 0)
+            }
+            return 0
+          }),
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4
+        }
+      ]
     }
   }
 
-  const getSpeedAccuracyData = (timeRange) => {
+  const getSpeedAccuracyData = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
-    
+
     return {
-      datasets: [{
-        label: '练习记录',
-        data: sessions.map(session => ({
-          x: session.speed,
-          y: session.accuracy
-        })),
-        backgroundColor: 'rgba(59, 130, 246, 0.6)',
-        borderColor: '#3B82F6'
-      }]
+      datasets: [
+        {
+          label: '练习记录',
+          data: sessions.map(session => ({
+            x: session.speed,
+            y: session.accuracy
+          })),
+          backgroundColor: 'rgba(59, 130, 246, 0.6)',
+          borderColor: '#3B82F6'
+        }
+      ]
     }
   }
 
-  const getKeyErrorData = (timeRange) => {
+  const getKeyErrorData = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     const errorCounts = {}
-    
+
     sessions.forEach(session => {
       Object.entries(state.errorPatterns).forEach(([pattern, count]) => {
         const key = pattern.split('->')[0]
         errorCounts[key] = (errorCounts[key] || 0) + count
       })
     })
-    
+
     const topErrors = Object.entries(errorCounts)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
-    
+
     return {
       labels: topErrors.map(([key]) => key),
-      datasets: [{
-        label: '错误次数',
-        data: topErrors.map(([, count]) => count),
-        backgroundColor: 'rgba(239, 68, 68, 0.6)',
-        borderColor: '#EF4444'
-      }]
+      datasets: [
+        {
+          label: '错误次数',
+          data: topErrors.map(([, count]) => count),
+          backgroundColor: 'rgba(239, 68, 68, 0.6)',
+          borderColor: '#EF4444'
+        }
+      ]
     }
   }
 
-  const getTimeDistributionData = (timeRange) => {
+  const getTimeDistributionData = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     const timeSlots = {
       '早晨(6-12)': 0,
@@ -1082,7 +1091,7 @@ export const usePracticeStore = defineStore('practice', () => {
       '晚上(18-24)': 0,
       '深夜(0-6)': 0
     }
-    
+
     sessions.forEach(session => {
       const hour = new Date(session.timestamp).getHours()
       if (hour >= 6 && hour < 12) timeSlots['早晨(6-12)'] += session.duration
@@ -1090,22 +1099,19 @@ export const usePracticeStore = defineStore('practice', () => {
       else if (hour >= 18 && hour < 24) timeSlots['晚上(18-24)'] += session.duration
       else timeSlots['深夜(0-6)'] += session.duration
     })
-    
+
     return {
       labels: Object.keys(timeSlots),
-      datasets: [{
-        data: Object.values(timeSlots).map(time => time / 60000), // 转换为分钟
-        backgroundColor: [
-          '#F59E0B',
-          '#3B82F6',
-          '#8B5CF6',
-          '#1F2937'
-        ]
-      }]
+      datasets: [
+        {
+          data: Object.values(timeSlots).map(time => time / 60000), // 转换为分钟
+          backgroundColor: ['#F59E0B', '#3B82F6', '#8B5CF6', '#1F2937']
+        }
+      ]
     }
   }
 
-  const getPracticeRecords = (timeRange) => {
+  const getPracticeRecords = timeRange => {
     return getSessionsForTimeRange(timeRange).map(session => ({
       id: session.id,
       date: new Date(session.timestamp).toLocaleDateString(),
@@ -1114,7 +1120,7 @@ export const usePracticeStore = defineStore('practice', () => {
       speed: session.speed,
       accuracy: session.accuracy,
       chars: session.totalCharacters,
-      score: session.score || Math.round(session.speed * session.accuracy / 100)
+      score: session.score || Math.round((session.speed * session.accuracy) / 100)
     }))
   }
 
@@ -1135,12 +1141,12 @@ export const usePracticeStore = defineStore('practice', () => {
     return [...records].sort((a, b) => {
       let aVal = a[sortBy]
       let bVal = b[sortBy]
-      
+
       if (sortBy === 'date') {
         aVal = new Date(aVal).getTime()
         bVal = new Date(bVal).getTime()
       }
-      
+
       if (sortOrder === 'asc') {
         return aVal > bVal ? 1 : -1
       } else {
@@ -1151,20 +1157,21 @@ export const usePracticeStore = defineStore('practice', () => {
 
   const getTotalRecords = (timeRange, filter, searchQuery) => {
     let records = getSessionsForTimeRange(timeRange)
-    
+
     if (searchQuery) {
-      records = records.filter(session => 
-        session.lessonId?.toString().includes(searchQuery)
+      records = records.filter(session => session.lessonId?.toString().includes(searchQuery))
+    }
+
+    if (filter !== 'all') {
+      records = filterRecords(
+        records.map(session => ({
+          accuracy: session.accuracy,
+          speed: session.speed
+        })),
+        filter
       )
     }
-    
-    if (filter !== 'all') {
-      records = filterRecords(records.map(session => ({
-        accuracy: session.accuracy,
-        speed: session.speed
-      })), filter)
-    }
-    
+
     return records.length
   }
 
@@ -1179,14 +1186,14 @@ export const usePracticeStore = defineStore('practice', () => {
     }))
   }
 
-  const getLearningInsights = (timeRange) => {
+  const getLearningInsights = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     const insights = []
-    
+
     if (sessions.length > 0) {
       const avgSpeed = sessions.reduce((sum, s) => sum + s.speed, 0) / sessions.length
       const avgAccuracy = sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length
-      
+
       if (avgSpeed > 25) {
         insights.push({
           id: 'speed-good',
@@ -1196,7 +1203,7 @@ export const usePracticeStore = defineStore('practice', () => {
           description: `您的平均速度达到 ${Math.round(avgSpeed)} 字/分钟，表现出色！`
         })
       }
-      
+
       if (avgAccuracy > 90) {
         insights.push({
           id: 'accuracy-good',
@@ -1206,7 +1213,7 @@ export const usePracticeStore = defineStore('practice', () => {
           description: `您的平均准确率达到 ${Math.round(avgAccuracy)}%，非常精准！`
         })
       }
-      
+
       if (sessions.length < 3) {
         insights.push({
           id: 'practice-more',
@@ -1222,19 +1229,21 @@ export const usePracticeStore = defineStore('practice', () => {
         })
       }
     }
-    
+
     return insights
   }
 
-  const getComparisonData = (type) => {
+  const getComparisonData = type => {
     // 返回对比分析数据
     return {
       labels: ['本周', '上周'],
-      datasets: [{
-        label: '速度对比',
-        data: [getAverageSpeed('week'), getAverageSpeedForPreviousPeriod('week')],
-        backgroundColor: ['#3B82F6', '#93C5FD']
-      }]
+      datasets: [
+        {
+          label: '速度对比',
+          data: [getAverageSpeed('week'), getAverageSpeedForPreviousPeriod('week')],
+          backgroundColor: ['#3B82F6', '#93C5FD']
+        }
+      ]
     }
   }
 
@@ -1252,7 +1261,7 @@ export const usePracticeStore = defineStore('practice', () => {
     await loadPracticeData()
   }
 
-  const loadStatsData = async (timeRange) => {
+  const loadStatsData = async timeRange => {
     // 加载指定时间范围的统计数据
     return Promise.resolve()
   }
@@ -1269,10 +1278,10 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   // 辅助函数
-  const getSessionsForTimeRange = (timeRange) => {
+  const getSessionsForTimeRange = timeRange => {
     const now = new Date()
     let startDate = new Date()
-    
+
     switch (timeRange) {
       case 'day':
         startDate.setHours(0, 0, 0, 0)
@@ -1294,17 +1303,15 @@ export const usePracticeStore = defineStore('practice', () => {
       default:
         startDate.setDate(now.getDate() - 7)
     }
-    
-    return state.sessionHistory.filter(session => 
-      new Date(session.timestamp) >= startDate
-    )
+
+    return state.sessionHistory.filter(session => new Date(session.timestamp) >= startDate)
   }
 
-  const getSessionsForPreviousPeriod = (timeRange) => {
+  const getSessionsForPreviousPeriod = timeRange => {
     const now = new Date()
     let startDate = new Date()
     let endDate = new Date()
-    
+
     switch (timeRange) {
       case 'day':
         endDate.setDate(now.getDate() - 1)
@@ -1324,30 +1331,30 @@ export const usePracticeStore = defineStore('practice', () => {
         endDate.setDate(now.getDate() - 7)
         startDate.setDate(now.getDate() - 14)
     }
-    
+
     return state.sessionHistory.filter(session => {
       const sessionDate = new Date(session.timestamp)
       return sessionDate >= startDate && sessionDate <= endDate
     })
   }
 
-  const getAverageSpeedForPreviousPeriod = (timeRange) => {
+  const getAverageSpeedForPreviousPeriod = timeRange => {
     const sessions = getSessionsForPreviousPeriod(timeRange)
     if (sessions.length === 0) return 0
     return Math.round(sessions.reduce((sum, s) => sum + s.speed, 0) / sessions.length)
   }
 
-  const getAverageAccuracyForPreviousPeriod = (timeRange) => {
+  const getAverageAccuracyForPreviousPeriod = timeRange => {
     const sessions = getSessionsForPreviousPeriod(timeRange)
     if (sessions.length === 0) return 0
     return Math.round(sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length)
   }
 
-  const getSessionCountForPreviousPeriod = (timeRange) => {
+  const getSessionCountForPreviousPeriod = timeRange => {
     return getSessionsForPreviousPeriod(timeRange).length
   }
 
-  const groupSessionsByDate = (sessions) => {
+  const groupSessionsByDate = sessions => {
     const grouped = {}
     sessions.forEach(session => {
       const date = new Date(session.timestamp).toLocaleDateString()
@@ -1359,7 +1366,7 @@ export const usePracticeStore = defineStore('practice', () => {
     return grouped
   }
 
-  const getMetricLabel = (metric) => {
+  const getMetricLabel = metric => {
     const labels = {
       speed: '速度 (字/分)',
       accuracy: '准确率 (%)',
@@ -1369,7 +1376,7 @@ export const usePracticeStore = defineStore('practice', () => {
     return labels[metric] || ''
   }
 
-  const formatDuration = (milliseconds) => {
+  const formatDuration = milliseconds => {
     const minutes = Math.floor(milliseconds / 60000)
     const seconds = Math.floor((milliseconds % 60000) / 1000)
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
@@ -1391,7 +1398,7 @@ export const usePracticeStore = defineStore('practice', () => {
     return Promise.resolve()
   }
 
-  const getCompletedLessons = (timeRange) => {
+  const getCompletedLessons = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     const completedLessons = new Set()
     sessions.forEach(session => {
@@ -1407,52 +1414,56 @@ export const usePracticeStore = defineStore('practice', () => {
     return Promise.resolve()
   }
 
-  const loadStatsForPeriod = async (period) => {
+  const loadStatsForPeriod = async period => {
     // 加载指定时期的统计数据
     return Promise.resolve()
   }
 
   // Analytics页面需要的高级分析方法
-  const getPerformanceIndex = (timeRange) => {
+  const getPerformanceIndex = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     if (sessions.length === 0) return 0
-    
+
     const avgSpeed = sessions.reduce((sum, s) => sum + s.speed, 0) / sessions.length
     const avgAccuracy = sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length
-    const speedScore = Math.min(avgSpeed / 60 * 100, 100) // 60字/分为100分
+    const speedScore = Math.min((avgSpeed / 60) * 100, 100) // 60字/分为100分
     const accuracyScore = avgAccuracy
-    
+
     return Math.round((speedScore + accuracyScore) / 2)
   }
 
-  const getPerformanceComponents = (timeRange) => {
+  const getPerformanceComponents = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     if (sessions.length === 0) return { speed: 0, accuracy: 0, stability: 0, improvement: 0 }
-    
+
     const avgSpeed = sessions.reduce((sum, s) => sum + s.speed, 0) / sessions.length
     const avgAccuracy = sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length
-    
+
     // 计算稳定性（速度和准确率的标准差）
-    const speedVariance = sessions.reduce((sum, s) => Math.pow(s.speed - avgSpeed, 2), 0) / sessions.length
-    const accuracyVariance = sessions.reduce((sum, s) => Math.pow(s.accuracy - avgAccuracy, 2), 0) / sessions.length
+    const speedVariance =
+      sessions.reduce((sum, s) => Math.pow(s.speed - avgSpeed, 2), 0) / sessions.length
+    const accuracyVariance =
+      sessions.reduce((sum, s) => Math.pow(s.accuracy - avgAccuracy, 2), 0) / sessions.length
     const stability = Math.max(0, 100 - Math.sqrt(speedVariance + accuracyVariance))
-    
+
     // 计算进步率（最近与最早的对比）
-    const improvement = sessions.length > 1 ? 
-      ((sessions[sessions.length - 1].speed - sessions[0].speed) / sessions[0].speed * 100) : 0
-    
+    const improvement =
+      sessions.length > 1
+        ? ((sessions[sessions.length - 1].speed - sessions[0].speed) / sessions[0].speed) * 100
+        : 0
+
     return {
-      speed: Math.round(Math.min(avgSpeed / 60 * 100, 100)),
+      speed: Math.round(Math.min((avgSpeed / 60) * 100, 100)),
       accuracy: Math.round(avgAccuracy),
       stability: Math.round(stability),
       improvement: Math.round(Math.max(0, improvement))
     }
   }
 
-  const getKeyMetrics = (timeRange) => {
+  const getKeyMetrics = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     const previousSessions = getSessionsForPreviousPeriod(timeRange)
-    
+
     return [
       {
         key: 'sessions',
@@ -1489,14 +1500,14 @@ export const usePracticeStore = defineStore('practice', () => {
     ]
   }
 
-  const getIntelligentInsights = (timeRange) => {
+  const getIntelligentInsights = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     const insights = []
-    
+
     if (sessions.length > 0) {
       const avgSpeed = sessions.reduce((sum, s) => sum + s.speed, 0) / sessions.length
       const avgAccuracy = sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length
-      
+
       // 速度分析
       if (avgSpeed > 40) {
         insights.push({
@@ -1512,7 +1523,7 @@ export const usePracticeStore = defineStore('practice', () => {
           action: { label: '挑战更高难度', type: 'practice', target: 'advanced' }
         })
       }
-      
+
       // 准确率分析
       if (avgAccuracy > 95) {
         insights.push({
@@ -1527,7 +1538,7 @@ export const usePracticeStore = defineStore('practice', () => {
           ]
         })
       }
-      
+
       // 练习频率分析
       if (sessions.length < 5) {
         insights.push({
@@ -1544,21 +1555,21 @@ export const usePracticeStore = defineStore('practice', () => {
         })
       }
     }
-    
+
     return insights
   }
 
   const getPerformanceTrendData = (timeRange, metric) => {
     const sessions = getSessionsForTimeRange(timeRange)
     const groupedData = groupSessionsByDate(sessions)
-    
+
     return {
       labels: Object.keys(groupedData),
       datasets: [
         {
           label: '速度',
-          data: Object.values(groupedData).map(daySessions => 
-            daySessions.reduce((sum, s) => sum + s.speed, 0) / daySessions.length
+          data: Object.values(groupedData).map(
+            daySessions => daySessions.reduce((sum, s) => sum + s.speed, 0) / daySessions.length
           ),
           borderColor: '#3B82F6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -1566,8 +1577,8 @@ export const usePracticeStore = defineStore('practice', () => {
         },
         {
           label: '准确率',
-          data: Object.values(groupedData).map(daySessions => 
-            daySessions.reduce((sum, s) => sum + s.accuracy, 0) / daySessions.length
+          data: Object.values(groupedData).map(
+            daySessions => daySessions.reduce((sum, s) => sum + s.accuracy, 0) / daySessions.length
           ),
           borderColor: '#10B981',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -1577,10 +1588,10 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   }
 
-  const getEfficiencyHeatmapData = (timeRange) => {
+  const getEfficiencyHeatmapData = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     const heatmapData = []
-    
+
     // 按小时和星期几生成热力图数据
     for (let day = 0; day < 7; day++) {
       for (let hour = 0; hour < 24; hour++) {
@@ -1588,10 +1599,13 @@ export const usePracticeStore = defineStore('practice', () => {
           const date = new Date(session.timestamp)
           return date.getDay() === day && date.getHours() === hour
         })
-        
-        const efficiency = sessionsInSlot.length > 0 ? 
-          sessionsInSlot.reduce((sum, s) => sum + s.speed * s.accuracy / 100, 0) / sessionsInSlot.length : 0
-        
+
+        const efficiency =
+          sessionsInSlot.length > 0
+            ? sessionsInSlot.reduce((sum, s) => sum + (s.speed * s.accuracy) / 100, 0) /
+              sessionsInSlot.length
+            : 0
+
         heatmapData.push({
           x: hour,
           y: day,
@@ -1599,57 +1613,63 @@ export const usePracticeStore = defineStore('practice', () => {
         })
       }
     }
-    
+
     return {
-      datasets: [{
-        label: '学习效率',
-        data: heatmapData,
-        backgroundColor: (ctx) => {
-          const value = ctx.parsed.v
-          const alpha = Math.min(value / 100, 1)
-          return `rgba(59, 130, 246, ${alpha})`
+      datasets: [
+        {
+          label: '学习效率',
+          data: heatmapData,
+          backgroundColor: ctx => {
+            const value = ctx.parsed.v
+            const alpha = Math.min(value / 100, 1)
+            return `rgba(59, 130, 246, ${alpha})`
+          }
         }
-      }]
+      ]
     }
   }
 
-  const getErrorPatternData = (timeRange) => {
+  const getErrorPatternData = timeRange => {
     // 简化的桑基图数据
     return {
-      datasets: [{
-        data: [
-          { from: '声母错误', to: 'zh-z', value: 15 },
-          { from: '声母错误', to: 'ch-c', value: 12 },
-          { from: '韵母错误', to: 'ing-in', value: 20 },
-          { from: '韵母错误', to: 'ang-an', value: 18 }
-        ]
-      }]
+      datasets: [
+        {
+          data: [
+            { from: '声母错误', to: 'zh-z', value: 15 },
+            { from: '声母错误', to: 'ch-c', value: 12 },
+            { from: '韵母错误', to: 'ing-in', value: 20 },
+            { from: '韵母错误', to: 'ang-an', value: 18 }
+          ]
+        }
+      ]
     }
   }
 
-  const getSkillRadarData = (timeRange) => {
+  const getSkillRadarData = timeRange => {
     const sessions = getSessionsForTimeRange(timeRange)
     if (sessions.length === 0) return { datasets: [] }
-    
+
     const avgSpeed = sessions.reduce((sum, s) => sum + s.speed, 0) / sessions.length
     const avgAccuracy = sessions.reduce((sum, s) => sum + s.accuracy, 0) / sessions.length
-    
+
     return {
       labels: ['声母熟练度', '韵母熟练度', '词汇掌握', '句子流畅度', '整体节奏', '错误率控制'],
-      datasets: [{
-        label: '技能水平',
-        data: [
-          Math.min(avgSpeed / 60 * 100, 100), // 声母
-          Math.min(avgSpeed / 50 * 100, 100), // 韵母  
-          Math.min(avgSpeed / 40 * 100, 100), // 词汇
-          Math.min(avgSpeed / 30 * 100, 100), // 句子
-          avgAccuracy, // 节奏
-          Math.max(0, 100 - (100 - avgAccuracy) * 2) // 错误控制
-        ],
-        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-        borderColor: '#3B82F6',
-        pointBackgroundColor: '#3B82F6'
-      }]
+      datasets: [
+        {
+          label: '技能水平',
+          data: [
+            Math.min((avgSpeed / 60) * 100, 100), // 声母
+            Math.min((avgSpeed / 50) * 100, 100), // 韵母
+            Math.min((avgSpeed / 40) * 100, 100), // 词汇
+            Math.min((avgSpeed / 30) * 100, 100), // 句子
+            avgAccuracy, // 节奏
+            Math.max(0, 100 - (100 - avgAccuracy) * 2) // 错误控制
+          ],
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: '#3B82F6',
+          pointBackgroundColor: '#3B82F6'
+        }
+      ]
     }
   }
 
@@ -1657,23 +1677,25 @@ export const usePracticeStore = defineStore('practice', () => {
     // 简化的预测数据
     const futureData = []
     const currentSpeed = getAverageSpeed('month')
-    
+
     for (let i = 1; i <= 12; i++) {
       futureData.push({
         x: `+${i}月`,
         y: currentSpeed + i * 2 // 假设每月提升2字/分
       })
     }
-    
+
     return {
       labels: futureData.map(d => d.x),
-      datasets: [{
-        label: '速度预测',
-        data: futureData.map(d => d.y),
-        borderColor: '#8B5CF6',
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-        borderDash: [5, 5]
-      }]
+      datasets: [
+        {
+          label: '速度预测',
+          data: futureData.map(d => d.y),
+          borderColor: '#8B5CF6',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderDash: [5, 5]
+        }
+      ]
     }
   }
 
@@ -1695,7 +1717,7 @@ export const usePracticeStore = defineStore('practice', () => {
     ]
   }
 
-  const getDrillDownColumns = (dimension) => {
+  const getDrillDownColumns = dimension => {
     return [
       { key: 'name', label: '名称', sortable: true },
       { key: 'value', label: '数值', sortable: true },
@@ -1704,7 +1726,7 @@ export const usePracticeStore = defineStore('practice', () => {
     ]
   }
 
-  const getAIRecommendations = (timeRange) => {
+  const getAIRecommendations = timeRange => {
     return [
       {
         id: 'speed-focus',
@@ -1735,7 +1757,7 @@ export const usePracticeStore = defineStore('practice', () => {
         completed: false
       },
       {
-        id: 'accuracy-goal', 
+        id: 'accuracy-goal',
         title: '准确率目标',
         description: '保持95%以上的准确率',
         progress: 88,
@@ -1746,68 +1768,202 @@ export const usePracticeStore = defineStore('practice', () => {
   }
 
   // 其他Analytics方法的简化实现
-  const getTimeAnalysisData = (timeRange) => ({ timeSlots: [], efficiency: [] })
-  const getTimeRecommendations = () => ([])
-  const getLearningPatterns = (timeRange) => ({ patterns: [] })
-  const getEfficiencyMetrics = (timeRange) => ({ metrics: [] })
-  const getDifficultyAnalysis = (timeRange) => ({ analysis: [] })
-  const getContentRecommendations = () => ([])
-  const getEnvironmentFactors = (timeRange) => ({ factors: [] })
-  const getEnvironmentSuggestions = () => ([])
-  const getAllAnalyticsData = (timeRange) => ({ data: {} })
-  const getPerformanceData = (timeRange) => ({ performance: {} })
+  const getTimeAnalysisData = timeRange => ({ timeSlots: [], efficiency: [] })
+  const getTimeRecommendations = () => []
+  const getLearningPatterns = timeRange => ({ patterns: [] })
+  const getEfficiencyMetrics = timeRange => ({ metrics: [] })
+  const getDifficultyAnalysis = timeRange => ({ analysis: [] })
+  const getContentRecommendations = () => []
+  const getEnvironmentFactors = timeRange => ({ factors: [] })
+  const getEnvironmentSuggestions = () => []
+  const getAllAnalyticsData = timeRange => ({ data: {} })
+  const getPerformanceData = timeRange => ({ performance: {} })
 
   // Analytics操作方法
-  const refreshAnalyticsData = async (timeRange) => Promise.resolve()
-  const loadAnalyticsData = async (timeRange) => Promise.resolve()
-  const generateIntelligentInsights = async (timeRange) => Promise.resolve()
+  const refreshAnalyticsData = async timeRange => Promise.resolve()
+  const loadAnalyticsData = async timeRange => Promise.resolve()
+  const generateIntelligentInsights = async timeRange => Promise.resolve()
   const drillDownAnalysis = (row, dimension) => {}
   const exportDrillDownData = (dimension, timeRange) => {}
-  const adjustGoal = (goalId) => {}
-  const applyTimeOptimization = (optimization) => {}
-  const applyMethodOptimization = (optimization) => {}
-  const applyContentOptimization = (optimization) => {}
-  const applyEnvironmentOptimization = (optimization) => {}
-  const saveAnalyticsSettings = (settings) => {}
+  const adjustGoal = goalId => {}
+  const applyTimeOptimization = optimization => {}
+  const applyMethodOptimization = optimization => {}
+  const applyContentOptimization = optimization => {}
+  const applyEnvironmentOptimization = optimization => {}
+  const saveAnalyticsSettings = settings => {}
   const exportAnalyticsReport = (format, options, timeRange) => {}
-  const createPersonalizedGoal = (goal) => {}
+  const createPersonalizedGoal = goal => {}
 
   // Learning页面需要的方法
-  const getLessonById = (id) => {
+  const getLessonById = id => {
     const lessons = getAllLessons()
     return lessons.find(lesson => lesson.id === id) || lessons[0]
   }
 
-  const getLessonProgress = (id) => {
+  const getLessonProgress = id => {
     return state.lessonProgress[id] || 0
   }
 
   const getAllLessons = () => {
     return [
       // 声母练习
-      { id: 1, title: '基础声母(一)', description: '学习 b p m f d t n l', type: 'initial', initials: ['b', 'p', 'm', 'f'], difficulty: 1, estimatedTime: 15 },
-      { id: 2, title: '基础声母(二)', description: '学习 d t n l g k h', type: 'initial', initials: ['d', 't', 'n', 'l'], difficulty: 1, estimatedTime: 15 },
-      { id: 3, title: '翘舌声母', description: '学习 zh ch sh r', type: 'initial', initials: ['zh', 'ch', 'sh', 'r'], difficulty: 2, estimatedTime: 20 },
-      { id: 4, title: '平舌声母', description: '学习 z c s', type: 'initial', initials: ['z', 'c', 's'], difficulty: 2, estimatedTime: 15 },
-      { id: 5, title: '其他声母', description: '学习 j q x y w', type: 'initial', initials: ['j', 'q', 'x', 'y', 'w'], difficulty: 2, estimatedTime: 20 },
-      
-      // 韵母练习  
-      { id: 6, title: '单韵母', description: '学习 a o e i u ü', type: 'final', finals: ['a', 'o', 'e', 'i', 'u', 'v'], difficulty: 1, estimatedTime: 15 },
-      { id: 7, title: '复韵母(一)', description: '学习 ai ei ui ao ou iu', type: 'final', finals: ['ai', 'ei', 'ui', 'ao', 'ou', 'iu'], difficulty: 2, estimatedTime: 20 },
-      { id: 8, title: '复韵母(二)', description: '学习 ie ue üe', type: 'final', finals: ['ie', 'ue', 've'], difficulty: 2, estimatedTime: 15 },
-      { id: 9, title: '鼻韵母(一)', description: '学习 an en in un ün', type: 'final', finals: ['an', 'en', 'in', 'un'], difficulty: 2, estimatedTime: 20 },
-      { id: 10, title: '鼻韵母(二)', description: '学习 ang eng ing ong', type: 'final', finals: ['ang', 'eng', 'ing', 'ong'], difficulty: 3, estimatedTime: 20 },
-      
+      {
+        id: 1,
+        title: '基础声母(一)',
+        description: '学习 b p m f d t n l',
+        type: 'initial',
+        initials: ['b', 'p', 'm', 'f'],
+        difficulty: 1,
+        estimatedTime: 15
+      },
+      {
+        id: 2,
+        title: '基础声母(二)',
+        description: '学习 d t n l g k h',
+        type: 'initial',
+        initials: ['d', 't', 'n', 'l'],
+        difficulty: 1,
+        estimatedTime: 15
+      },
+      {
+        id: 3,
+        title: '翘舌声母',
+        description: '学习 zh ch sh r',
+        type: 'initial',
+        initials: ['zh', 'ch', 'sh', 'r'],
+        difficulty: 2,
+        estimatedTime: 20
+      },
+      {
+        id: 4,
+        title: '平舌声母',
+        description: '学习 z c s',
+        type: 'initial',
+        initials: ['z', 'c', 's'],
+        difficulty: 2,
+        estimatedTime: 15
+      },
+      {
+        id: 5,
+        title: '其他声母',
+        description: '学习 j q x y w',
+        type: 'initial',
+        initials: ['j', 'q', 'x', 'y', 'w'],
+        difficulty: 2,
+        estimatedTime: 20
+      },
+
+      // 韵母练习
+      {
+        id: 6,
+        title: '单韵母',
+        description: '学习 a o e i u ü',
+        type: 'final',
+        finals: ['a', 'o', 'e', 'i', 'u', 'v'],
+        difficulty: 1,
+        estimatedTime: 15
+      },
+      {
+        id: 7,
+        title: '复韵母(一)',
+        description: '学习 ai ei ui ao ou iu',
+        type: 'final',
+        finals: ['ai', 'ei', 'ui', 'ao', 'ou', 'iu'],
+        difficulty: 2,
+        estimatedTime: 20
+      },
+      {
+        id: 8,
+        title: '复韵母(二)',
+        description: '学习 ie ue üe',
+        type: 'final',
+        finals: ['ie', 'ue', 've'],
+        difficulty: 2,
+        estimatedTime: 15
+      },
+      {
+        id: 9,
+        title: '鼻韵母(一)',
+        description: '学习 an en in un ün',
+        type: 'final',
+        finals: ['an', 'en', 'in', 'un'],
+        difficulty: 2,
+        estimatedTime: 20
+      },
+      {
+        id: 10,
+        title: '鼻韵母(二)',
+        description: '学习 ang eng ing ong',
+        type: 'final',
+        finals: ['ang', 'eng', 'ing', 'ong'],
+        difficulty: 3,
+        estimatedTime: 20
+      },
+
       // 组合练习
-      { id: 11, title: '常用字练习', description: '练习高频常用汉字', type: 'word', difficulty: 3, estimatedTime: 25, words: ['的', '一', '了', '是', '我', '不', '人', '在', '他', '有'] },
-      { id: 12, title: '词组练习(一)', description: '练习双字词组', type: 'phrase', difficulty: 3, estimatedTime: 25, words: ['中国', '人民', '学习', '工作', '生活', '朋友', '时间', '问题', '方法', '发展'] },
-      { id: 13, title: '词组练习(二)', description: '练习三字词组', type: 'phrase', difficulty: 4, estimatedTime: 30, words: ['计算机', '互联网', '双拼法', '输入法', '键盘布局', '学习方法', '练习方式', '技能提升'] },
-      { id: 14, title: '句子练习', description: '练习完整句子输入', type: 'sentence', difficulty: 4, estimatedTime: 30, words: ['我喜欢学习双拼输入法', '双拼可以提高打字速度', '坚持练习是成功的关键', '熟练掌握需要时间和耐心'] },
-      { id: 15, title: '综合测试', description: '综合运用所学技能', type: 'test', difficulty: 5, estimatedTime: 40, words: ['综合测试内容，包含各种类型的文字练习，检验学习成果。'] }
+      {
+        id: 11,
+        title: '常用字练习',
+        description: '练习高频常用汉字',
+        type: 'word',
+        difficulty: 3,
+        estimatedTime: 25,
+        words: ['的', '一', '了', '是', '我', '不', '人', '在', '他', '有']
+      },
+      {
+        id: 12,
+        title: '词组练习(一)',
+        description: '练习双字词组',
+        type: 'phrase',
+        difficulty: 3,
+        estimatedTime: 25,
+        words: ['中国', '人民', '学习', '工作', '生活', '朋友', '时间', '问题', '方法', '发展']
+      },
+      {
+        id: 13,
+        title: '词组练习(二)',
+        description: '练习三字词组',
+        type: 'phrase',
+        difficulty: 4,
+        estimatedTime: 30,
+        words: [
+          '计算机',
+          '互联网',
+          '双拼法',
+          '输入法',
+          '键盘布局',
+          '学习方法',
+          '练习方式',
+          '技能提升'
+        ]
+      },
+      {
+        id: 14,
+        title: '句子练习',
+        description: '练习完整句子输入',
+        type: 'sentence',
+        difficulty: 4,
+        estimatedTime: 30,
+        words: [
+          '我喜欢学习双拼输入法',
+          '双拼可以提高打字速度',
+          '坚持练习是成功的关键',
+          '熟练掌握需要时间和耐心'
+        ]
+      },
+      {
+        id: 15,
+        title: '综合测试',
+        description: '综合运用所学技能',
+        type: 'test',
+        difficulty: 5,
+        estimatedTime: 40,
+        words: ['综合测试内容，包含各种类型的文字练习，检验学习成果。']
+      }
     ]
   }
 
-  const getLessonStats = (id) => {
+  const getLessonStats = id => {
     const baseStats = {
       totalTime: Math.floor(Math.random() * 1200), // 0-20分钟
       bestSpeed: Math.floor(Math.random() * 60) + 20, // 20-80 字/分
@@ -1817,7 +1973,7 @@ export const usePracticeStore = defineStore('practice', () => {
       mistakes: Math.floor(Math.random() * 20), // 0-20个错误
       improvement: Math.floor(Math.random() * 30) - 10 // -10 到 +20 的进步值
     }
-    
+
     // 如果有实际的历史数据，优先使用
     const savedStats = state.sessionHistory.filter(session => session.lessonId === id)
     if (savedStats.length > 0) {
@@ -1826,13 +1982,15 @@ export const usePracticeStore = defineStore('practice', () => {
         ...baseStats,
         totalTime: savedStats.reduce((sum, s) => sum + s.duration, 0),
         bestSpeed: Math.max(...savedStats.map(s => s.speed)),
-        averageAccuracy: Math.round(savedStats.reduce((sum, s) => sum + s.accuracy, 0) / savedStats.length),
+        averageAccuracy: Math.round(
+          savedStats.reduce((sum, s) => sum + s.accuracy, 0) / savedStats.length
+        ),
         attempts: savedStats.length,
         lastPractice: latest.endTime,
         mistakes: savedStats.reduce((sum, s) => sum + s.errors, 0)
       }
     }
-    
+
     return baseStats
   }
 
@@ -1842,7 +2000,7 @@ export const usePracticeStore = defineStore('practice', () => {
     return Math.round(totalProgress / lessons.length)
   }
 
-  const updateSettings = (newSettings) => {
+  const updateSettings = newSettings => {
     Object.assign(state.practiceSettings, newSettings)
     storageManager.setData('practiceSettings', state.practiceSettings)
   }
@@ -1855,7 +2013,7 @@ export const usePracticeStore = defineStore('practice', () => {
   return {
     // 状态
     state,
-    
+
     // 计算属性
     currentSessionStats,
     currentStats,
@@ -1869,7 +2027,7 @@ export const usePracticeStore = defineStore('practice', () => {
     upcomingAchievements,
     currentLessonProgress,
     dailyPracticeProgress,
-    
+
     // 方法
     startPractice,
     pausePractice,
@@ -1889,7 +2047,7 @@ export const usePracticeStore = defineStore('practice', () => {
     exportPracticeData,
     importPracticeData,
     resetPracticeData,
-    
+
     // Stats页面需要的方法
     getTotalTime,
     getAverageSpeed,
@@ -1914,7 +2072,7 @@ export const usePracticeStore = defineStore('practice', () => {
     refreshStats,
     loadStatsData,
     exportStats,
-    
+
     // Dashboard页面需要的方法
     loadTodayStats,
     loadRecentData,
@@ -1922,7 +2080,7 @@ export const usePracticeStore = defineStore('practice', () => {
     getCompletedLessons,
     refreshRecommendations,
     loadStatsForPeriod,
-    
+
     // Analytics页面需要的高级分析方法
     getPerformanceIndex,
     getPerformanceComponents,
@@ -1961,7 +2119,7 @@ export const usePracticeStore = defineStore('practice', () => {
     saveAnalyticsSettings,
     exportAnalyticsReport,
     createPersonalizedGoal,
-    
+
     // Learning页面需要的方法
     getLessonById,
     getLessonProgress,
@@ -1969,7 +2127,7 @@ export const usePracticeStore = defineStore('practice', () => {
     getLessonStats,
     getOverallProgress,
     updateSettings,
-    
+
     init
   }
 })

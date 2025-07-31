@@ -13,11 +13,11 @@ export function debounce(func, wait) {
 
 export function throttle(func, limit) {
   let inThrottle
-  return function(...args) {
+  return function (...args) {
     if (!inThrottle) {
       func.apply(this, args)
       inThrottle = true
-      setTimeout(() => inThrottle = false, limit)
+      setTimeout(() => (inThrottle = false), limit)
     }
   }
 }
@@ -38,7 +38,7 @@ export function formatTime(seconds) {
 
 export function formatDate(timestamp, format = 'default') {
   const date = new Date(timestamp)
-  
+
   switch (format) {
     case 'short':
       return date.toLocaleDateString()
@@ -60,7 +60,7 @@ export function getRelativeTime(timestamp) {
   const minutes = Math.floor(seconds / 60)
   const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
-  
+
   if (days > 0) {
     return `${days}天前`
   } else if (hours > 0) {
@@ -92,8 +92,8 @@ export function random(min, max) {
 export function shuffle(array) {
   const newArray = [...array]
   for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]]
   }
   return newArray
 }
@@ -102,15 +102,15 @@ export function deepClone(obj) {
   if (obj === null || typeof obj !== 'object') {
     return obj
   }
-  
+
   if (obj instanceof Date) {
     return new Date(obj.getTime())
   }
-  
+
   if (obj instanceof Array) {
     return obj.map(item => deepClone(item))
   }
-  
+
   if (typeof obj === 'object') {
     const clonedObj = {}
     for (const key in obj) {
@@ -124,26 +124,26 @@ export function deepClone(obj) {
 
 export function isEqual(a, b) {
   if (a === b) return true
-  
+
   if (a instanceof Date && b instanceof Date) {
     return a.getTime() === b.getTime()
   }
-  
+
   if (!a || !b || (typeof a !== 'object' && typeof b !== 'object')) {
     return a === b
   }
-  
+
   if (a === null || a === undefined || b === null || b === undefined) {
     return false
   }
-  
+
   if (a.prototype !== b.prototype) return false
-  
+
   let keys = Object.keys(a)
   if (keys.length !== Object.keys(b).length) {
     return false
   }
-  
+
   return keys.every(k => isEqual(a[k], b[k]))
 }
 

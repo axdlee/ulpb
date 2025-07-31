@@ -7,7 +7,8 @@ export const lessons = [
     id: 1,
     type: 'initial',
     title: '声母键位学习 - b、p、m、f',
-    description: '这节课我们将学习声母 b、p、m、f 的键位。这些声母都在键盘的左手区域,分别由左手的不同手指负责。',
+    description:
+      '这节课我们将学习声母 b、p、m、f 的键位。这些声母都在键盘的左手区域,分别由左手的不同手指负责。',
     initials: ['b', 'p', 'm', 'f'],
     examples: [
       { char: '把', ...getShuangpinCode('把') },
@@ -20,7 +21,8 @@ export const lessons = [
     id: 2,
     type: 'initial',
     title: '声母键位学习 - d、t、n、l',
-    description: '这节课我们将学习声母 d、t、n、l 的键位。这些声母位于键盘中间区域,需要注意手指的自然伸展。',
+    description:
+      '这节课我们将学习声母 d、t、n、l 的键位。这些声母位于键盘中间区域,需要注意手指的自然伸展。',
     initials: ['d', 't', 'n', 'l'],
     examples: [
       { char: '大', ...getShuangpinCode('大') },
@@ -33,7 +35,8 @@ export const lessons = [
     id: 3,
     type: 'initial',
     title: '声母键位学习 - g、k、h',
-    description: '这节课我们将学习声母 g、k、h 的键位。这些声母位于键盘右手区域,由右手食指和中指负责。',
+    description:
+      '这节课我们将学习声母 g、k、h 的键位。这些声母位于键盘右手区域,由右手食指和中指负责。',
     initials: ['g', 'k', 'h'],
     examples: [
       { char: '高', ...getShuangpinCode('高') },
@@ -100,7 +103,8 @@ export const lessons = [
     id: 8,
     type: 'final',
     title: '韵母键位学习 - a、o、e、i、u、v',
-    description: '这节课我们将学习基本韵母 a、o、e、i、u、v 的键位。这些是最基础的韵母,也是其他韵母的组成部分。',
+    description:
+      '这节课我们将学习基本韵母 a、o、e、i、u、v 的键位。这些是最基础的韵母,也是其他韵母的组成部分。',
     finals: ['a', 'o', 'e', 'i', 'u', 'v'],
     examples: [
       { char: '啊', ...getShuangpinCode('啊') },
@@ -211,9 +215,9 @@ export function getLesson(id) {
 export function getLessonProgress(id) {
   const lesson = getLesson(id)
   if (!lesson) return 0
-  
+
   const totalLessons = lessons.filter(l => l.type === lesson.type).length
   const currentIndex = lessons.findIndex(l => l.id === id)
-  
+
   return Math.round((currentIndex / totalLessons) * 100)
-} 
+}

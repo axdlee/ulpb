@@ -302,7 +302,7 @@ export const routeUtils = {
   // 获取面包屑导航
   getBreadcrumbs(currentRoute) {
     const breadcrumbs = []
-    
+
     // 添加首页
     if (currentRoute.name !== 'dashboard') {
       breadcrumbs.push({

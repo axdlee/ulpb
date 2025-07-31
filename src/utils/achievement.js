@@ -3,27 +3,32 @@ import { ACHIEVEMENT_TYPES, checkAchievement } from '../data/achievements'
 // 获取用户成就记录
 export function getUserAchievements() {
   const achievements = localStorage.getItem('achievements')
-  return achievements ? JSON.parse(achievements) : {
-    unlockedAchievements: new Set(),
-    points: 0,
-    stats: {
-      practiceTime: 0,
-      charCount: 0,
-      maxSpeed: 0,
-      maxAccuracy: 0,
-      completedLessons: 0,
-      streak: 0,
-      reviewCount: 0
-    }
-  }
+  return achievements
+    ? JSON.parse(achievements)
+    : {
+        unlockedAchievements: new Set(),
+        points: 0,
+        stats: {
+          practiceTime: 0,
+          charCount: 0,
+          maxSpeed: 0,
+          maxAccuracy: 0,
+          completedLessons: 0,
+          streak: 0,
+          reviewCount: 0
+        }
+      }
 }
 
 // 保存用户成就记录
 export function saveUserAchievements(achievements) {
-  localStorage.setItem('achievements', JSON.stringify({
-    ...achievements,
-    unlockedAchievements: Array.from(achievements.unlockedAchievements)
-  }))
+  localStorage.setItem(
+    'achievements',
+    JSON.stringify({
+      ...achievements,
+      unlockedAchievements: Array.from(achievements.unlockedAchievements)
+    })
+  )
 }
 
 // 更新用户统计数据
@@ -36,7 +41,7 @@ export function updateUserStats(stats) {
       ...stats
     }
   }
-  
+
   // 检查是否有新的成就
   const newUnlocked = checkNewAchievements(newAchievements.stats)
   if (newUnlocked.length > 0) {
@@ -46,11 +51,11 @@ export function updateUserStats(stats) {
       ...newUnlocked.map(a => a.id)
     ])
     newAchievements.points += newUnlocked.reduce((sum, a) => sum + a.reward.points, 0)
-    
+
     // 显示成就通知
     showAchievementNotifications(newUnlocked)
   }
-  
+
   saveUserAchievements(newAchievements)
   return newUnlocked
 }
@@ -59,44 +64,44 @@ export function updateUserStats(stats) {
 function checkNewAchievements(stats) {
   const achievements = getUserAchievements()
   const unlockedIds = achievements.unlockedAchievements
-  
+
   const newAchievements = []
-  
+
   // 检查练习时长成就
   checkAchievement(ACHIEVEMENT_TYPES.PRACTICE_TIME, stats.practiceTime)
     .filter(a => !unlockedIds.has(a.id))
     .forEach(a => newAchievements.push(a))
-  
+
   // 检查练习字数成就
   checkAchievement(ACHIEVEMENT_TYPES.CHAR_COUNT, stats.charCount)
     .filter(a => !unlockedIds.has(a.id))
     .forEach(a => newAchievements.push(a))
-  
+
   // 检查速度成就
   checkAchievement(ACHIEVEMENT_TYPES.SPEED, stats.maxSpeed)
     .filter(a => !unlockedIds.has(a.id))
     .forEach(a => newAchievements.push(a))
-  
+
   // 检查正确率成就
   checkAchievement(ACHIEVEMENT_TYPES.ACCURACY, stats.maxAccuracy)
     .filter(a => !unlockedIds.has(a.id))
     .forEach(a => newAchievements.push(a))
-  
+
   // 检查课程完成成就
   checkAchievement(ACHIEVEMENT_TYPES.LESSON_COMPLETE, stats.completedLessons)
     .filter(a => !unlockedIds.has(a.id))
     .forEach(a => newAchievements.push(a))
-  
+
   // 检查连续打卡成就
   checkAchievement(ACHIEVEMENT_TYPES.STREAK, stats.streak)
     .filter(a => !unlockedIds.has(a.id))
     .forEach(a => newAchievements.push(a))
-  
+
   // 检查复习成就
   checkAchievement(ACHIEVEMENT_TYPES.REVIEW, stats.reviewCount)
     .filter(a => !unlockedIds.has(a.id))
     .forEach(a => newAchievements.push(a))
-  
+
   return newAchievements
 }
 
@@ -117,15 +122,15 @@ function showAchievementNotifications(achievements) {
         </p>
       </div>
     `
-    
+
     // 添加到页面
     document.body.appendChild(notification)
-    
+
     // 添加动画类
     setTimeout(() => {
       notification.classList.add('show')
     }, 100)
-    
+
     // 3秒后移除
     setTimeout(() => {
       notification.classList.remove('show')
@@ -141,15 +146,15 @@ export function updateStreak() {
   const achievements = getUserAchievements()
   const lastPractice = localStorage.getItem('lastPractice')
   const today = new Date().toDateString()
-  
+
   if (lastPractice === today) {
     return achievements.stats.streak
   }
-  
+
   const yesterday = new Date()
   yesterday.setDate(yesterday.getDate() - 1)
   const yesterdayString = yesterday.toDateString()
-  
+
   let newStreak
   if (lastPractice === yesterdayString) {
     // 连续打卡
@@ -158,11 +163,11 @@ export function updateStreak() {
     // 打卡中断
     newStreak = 1
   }
-  
+
   // 更新记录
   localStorage.setItem('lastPractice', today)
   updateUserStats({ streak: newStreak })
-  
+
   return newStreak
 }
 
@@ -180,7 +185,7 @@ export function getUserLevel(points) {
     { level: 9, points: 11000 },
     { level: 10, points: 13000 }
   ]
-  
+
   for (let i = levels.length - 1; i >= 0; i--) {
     if (points >= levels[i].points) {
       return levels[i].level
@@ -203,11 +208,11 @@ export function getNextLevelPoints(points) {
     { level: 9, points: 11000 },
     { level: 10, points: 13000 }
   ]
-  
+
   for (let i = 0; i < levels.length; i++) {
     if (points < levels[i].points) {
       return levels[i].points
     }
   }
   return levels[levels.length - 1].points
-} 
+}

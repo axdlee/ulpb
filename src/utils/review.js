@@ -17,10 +17,10 @@ export function calculateReviewItems(errorRecords, practiceRecords) {
   // 遍历错误记录
   for (const record of errorRecords) {
     const { char, errorCount, lastError, reviewCount, lastReview } = record
-    
+
     // 计算复习优先级
     const priority = calculatePriority(errorCount, lastError, reviewCount, lastReview)
-    
+
     // 如果优先级高于阈值，加入复习列表
     if (priority > 0.6) {
       reviewItems.push({
@@ -37,21 +37,21 @@ export function calculateReviewItems(errorRecords, practiceRecords) {
 // 计算复习优先级
 function calculatePriority(errorCount, lastError, reviewCount, lastReview) {
   const now = Date.now()
-  
+
   // 错误次数权重
   const errorWeight = Math.min(errorCount / 5, 1) * 0.4
-  
+
   // 上次错误时间权重（越近权重越高）
   const lastErrorDays = (now - lastError) / (1000 * 60 * 60 * 24)
   const errorTimeWeight = Math.max(1 - lastErrorDays / 7, 0) * 0.3
-  
+
   // 复习次数权重（复习次数越少权重越高）
   const reviewWeight = Math.max(1 - reviewCount / 5, 0) * 0.2
-  
+
   // 上次复习时间权重（越久没复习权重越高）
   const lastReviewDays = (now - lastReview) / (1000 * 60 * 60 * 24)
   const reviewTimeWeight = Math.min(lastReviewDays / 7, 1) * 0.1
-  
+
   return errorWeight + errorTimeWeight + reviewWeight + reviewTimeWeight
 }
 
@@ -67,17 +67,17 @@ export function generateReviewPlan(reviewItems) {
   // 遍历需要复习的项目
   for (const item of reviewItems) {
     const { char, shengmu, yunmu } = item
-    
+
     // 收集声母
     if (shengmu) {
       groups.shengmu.add(shengmu)
     }
-    
+
     // 收集韵母
     if (yunmu) {
       groups.yunmu.add(yunmu)
     }
-    
+
     // 收集汉字
     groups.chars.add(char)
   }
@@ -100,7 +100,7 @@ export function generateReviewPlan(reviewItems) {
 // 生成建议复习的课程
 function generateSuggestedLessons(groups) {
   const lessons = []
-  
+
   // 如果有需要复习的声母，添加对应的声母课程
   if (groups.shengmu.size > 0) {
     lessons.push({
@@ -110,7 +110,7 @@ function generateSuggestedLessons(groups) {
       description: `重点复习以下声母：${Array.from(groups.shengmu).join('、')}`
     })
   }
-  
+
   // 如果有需要复习的韵母，添加对应的韵母课程
   if (groups.yunmu.size > 0) {
     lessons.push({
@@ -120,7 +120,7 @@ function generateSuggestedLessons(groups) {
       description: `重点复习以下韵母：${Array.from(groups.yunmu).join('、')}`
     })
   }
-  
+
   // 如果有需要复习的汉字，添加汉字练习课程
   if (groups.chars.size > 0) {
     lessons.push({
@@ -130,7 +130,7 @@ function generateSuggestedLessons(groups) {
       description: `重点练习以下汉字：${Array.from(groups.chars).join('、')}`
     })
   }
-  
+
   return lessons
 }
 
@@ -138,10 +138,10 @@ function generateSuggestedLessons(groups) {
 export function updateErrorRecord(char, shengmu, yunmu, isError) {
   const now = Date.now()
   const key = `error_${char}`
-  
+
   // 获取现有记录
   let record = JSON.parse(localStorage.getItem(key) || 'null')
-  
+
   if (isError) {
     // 如果是错误，更新错误记录
     if (record) {
@@ -165,7 +165,7 @@ export function updateErrorRecord(char, shengmu, yunmu, isError) {
       record.lastReview = now
     }
   }
-  
+
   // 保存记录
   if (record) {
     localStorage.setItem(key, JSON.stringify(record))
@@ -175,7 +175,7 @@ export function updateErrorRecord(char, shengmu, yunmu, isError) {
 // 获取所有错误记录
 export function getAllErrorRecords() {
   const records = []
-  
+
   // 遍历 localStorage
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)
@@ -186,7 +186,7 @@ export function getAllErrorRecords() {
       }
     }
   }
-  
+
   return records
 }
 
@@ -199,4 +199,4 @@ export function clearErrorRecords() {
       localStorage.removeItem(key)
     }
   }
-} 
+}

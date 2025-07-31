@@ -2,26 +2,66 @@ import { pinyin } from 'pinyin-pro'
 
 // 声母映射表
 const initialMap = {
-  'b': 'b', 'p': 'p', 'm': 'm', 'f': 'f',
-  'd': 'd', 't': 't', 'n': 'n', 'l': 'l',
-  'g': 'g', 'k': 'k', 'h': 'h',
-  'j': 'j', 'q': 'q', 'x': 'x',
-  'zh': 'v', 'ch': 'i', 'sh': 'u', 'r': 'r',
-  'z': 'z', 'c': 'c', 's': 's',
-  'y': 'y', 'w': 'w'
+  b: 'b',
+  p: 'p',
+  m: 'm',
+  f: 'f',
+  d: 'd',
+  t: 't',
+  n: 'n',
+  l: 'l',
+  g: 'g',
+  k: 'k',
+  h: 'h',
+  j: 'j',
+  q: 'q',
+  x: 'x',
+  zh: 'v',
+  ch: 'i',
+  sh: 'u',
+  r: 'r',
+  z: 'z',
+  c: 'c',
+  s: 's',
+  y: 'y',
+  w: 'w'
 }
 
 // 韵母映射表
 const finalMap = {
-  'a': 'a', 'o': 'o', 'e': 'e', 'i': 'i', 'u': 'u', 'v': 'v',
-  'ai': 'd', 'ei': 'w', 'ui': 'v',
-  'ao': 'c', 'ou': 'z', 'iu': 'q',
-  'ie': 'x', 'ue': 't', 've': 't',
-  'an': 'j', 'en': 'f', 'in': 'n', 'un': 'p',
-  'ang': 'h', 'eng': 'g', 'ing': 'k', 'ong': 's',
-  'ia': 'w', 'iao': 'k', 'ian': 'm', 'iang': 'l',
-  'iong': 's', 'ua': 'w', 'uai': 'y', 'uan': 'r', 'uang': 'l',
-  'uo': 'o'
+  a: 'a',
+  o: 'o',
+  e: 'e',
+  i: 'i',
+  u: 'u',
+  v: 'v',
+  ai: 'd',
+  ei: 'w',
+  ui: 'v',
+  ao: 'c',
+  ou: 'z',
+  iu: 'q',
+  ie: 'x',
+  ue: 't',
+  ve: 't',
+  an: 'j',
+  en: 'f',
+  in: 'n',
+  un: 'p',
+  ang: 'h',
+  eng: 'g',
+  ing: 'k',
+  ong: 's',
+  ia: 'w',
+  iao: 'k',
+  ian: 'm',
+  iang: 'l',
+  iong: 's',
+  ua: 'w',
+  uai: 'y',
+  uan: 'r',
+  uang: 'l',
+  uo: 'o'
 }
 
 /**
@@ -32,14 +72,14 @@ const finalMap = {
 export function getShuangpinCode(char) {
   try {
     // 获取声母
-    const initialResult = pinyin(char, { 
+    const initialResult = pinyin(char, {
       toneType: 'none',
       type: 'array',
       pattern: 'initial'
     })
-    
+
     // 获取韵母
-    const finalResult = pinyin(char, { 
+    const finalResult = pinyin(char, {
       toneType: 'none',
       type: 'array',
       pattern: 'final'
@@ -52,8 +92,8 @@ export function getShuangpinCode(char) {
     const shengmu = initialMap[initial] || initial.toLowerCase()
     const yunmu = finalMap[final] || final.toLowerCase()
 
-    return { 
-      shengmu, 
+    return {
+      shengmu,
       yunmu,
       pinyin: initial + final
     }
@@ -65,12 +105,12 @@ export function getShuangpinCode(char) {
 
 /**
  * 获取完整拼音
- * @param {string} char 单个汉字  
+ * @param {string} char 单个汉字
  * @returns {string} 完整拼音
  */
 export function getFullPinyin(char) {
   try {
-    const result = pinyin(char, { 
+    const result = pinyin(char, {
       toneType: 'none',
       type: 'string'
     })
@@ -99,9 +139,9 @@ export function validateShuangpinInput(char, input) {
  */
 export function generatePracticeText(lesson) {
   if (!lesson || !lesson.examples) return []
-  
+
   const practiceChars = []
-  
+
   // 从课程例子中生成练习文本
   lesson.examples.forEach(example => {
     const code = getShuangpinCode(example.char)
@@ -112,13 +152,13 @@ export function generatePracticeText(lesson) {
       pinyin: code.pinyin
     })
   })
-  
+
   // 重复几次增加练习量
   const repeatedChars = []
   for (let i = 0; i < 3; i++) {
     repeatedChars.push(...practiceChars)
   }
-  
+
   // 随机打乱
   return repeatedChars.sort(() => Math.random() - 0.5)
 }
@@ -131,7 +171,7 @@ export function generatePracticeText(lesson) {
  */
 export function checkKeyMatch(char, key) {
   const { shengmu, yunmu } = getShuangpinCode(char)
-  
+
   return {
     isShengmu: key === shengmu,
     isYunmu: key === yunmu,
@@ -143,11 +183,56 @@ export function checkKeyMatch(char, key) {
  * 常用汉字列表
  */
 export const commonChars = [
-  '的', '一', '是', '了', '我', '不', '人', '在', '他', '有',
-  '这', '个', '上', '们', '来', '到', '时', '大', '地', '为',
-  '子', '中', '你', '说', '生', '国', '年', '着', '就', '那',
-  '和', '要', '她', '出', '也', '得', '里', '后', '自', '以',
-  '会', '家', '可', '下', '而', '过', '天', '去', '能', '对'
+  '的',
+  '一',
+  '是',
+  '了',
+  '我',
+  '不',
+  '人',
+  '在',
+  '他',
+  '有',
+  '这',
+  '个',
+  '上',
+  '们',
+  '来',
+  '到',
+  '时',
+  '大',
+  '地',
+  '为',
+  '子',
+  '中',
+  '你',
+  '说',
+  '生',
+  '国',
+  '年',
+  '着',
+  '就',
+  '那',
+  '和',
+  '要',
+  '她',
+  '出',
+  '也',
+  '得',
+  '里',
+  '后',
+  '自',
+  '以',
+  '会',
+  '家',
+  '可',
+  '下',
+  '而',
+  '过',
+  '天',
+  '去',
+  '能',
+  '对'
 ]
 
 /**

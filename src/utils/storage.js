@@ -25,11 +25,11 @@ export class StorageManager {
     try {
       // 根据版本进行数据迁移
       let migratedData = { ...oldData }
-      
+
       // 添加版本信息
       migratedData.version = this.version
       migratedData.migratedAt = Date.now()
-      
+
       // 保存迁移后的数据
       this.saveAllData(migratedData)
       console.log('数据迁移完成')
@@ -107,19 +107,19 @@ export class StorageManager {
   restore(backupData) {
     try {
       const data = JSON.parse(backupData)
-      
+
       // 验证备份数据
       if (!this.validateBackupData(data)) {
         throw new Error('备份数据格式不正确')
       }
-      
+
       // 创建当前数据备份
       const currentBackup = this.backup()
       this.setData('lastBackup', currentBackup)
-      
+
       // 恢复数据
       this.saveAllData(data)
-      
+
       return { success: true, message: '数据恢复成功' }
     } catch (error) {
       return { success: false, error: error.message }
@@ -135,11 +135,11 @@ export class StorageManager {
   setupAutoBackup() {
     const autoBackupInterval = this.getData('autoBackupInterval', 24 * 60 * 60 * 1000) // 默认24小时
     const lastBackup = this.getData('lastAutoBackup', 0)
-    
+
     if (Date.now() - lastBackup > autoBackupInterval) {
       this.performAutoBackup()
     }
-    
+
     // 设置定时器
     setInterval(() => {
       this.performAutoBackup()
@@ -164,7 +164,7 @@ export class StorageManager {
       const data = JSON.stringify(this.getAllData())
       const used = new Blob([data]).size
       const available = 5 * 1024 * 1024 // 假设localStorage限制为5MB
-      
+
       return {
         used,
         available,
@@ -190,22 +190,20 @@ export class StorageManager {
   // 压缩数据
   compressData() {
     const data = this.getAllData()
-    
+
     // 删除过期数据
     this.cleanupExpiredData(data)
-    
+
     // 压缩练习记录（只保留最近的记录）
     if (data.practiceRecords && data.practiceRecords.length > 1000) {
       data.practiceRecords = data.practiceRecords.slice(-1000)
     }
-    
+
     // 压缩游戏分数（只保留最高分）
     if (data.gameScores && data.gameScores.length > 100) {
-      data.gameScores = data.gameScores
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 100)
+      data.gameScores = data.gameScores.sort((a, b) => b.score - a.score).slice(0, 100)
     }
-    
+
     this.saveAllData(data)
     return this.getStorageUsage()
   }
@@ -215,14 +213,14 @@ export class StorageManager {
     const now = Date.now()
     const expireDays = 90 // 保留90天的数据
     const expireTime = expireDays * 24 * 60 * 60 * 1000
-    
+
     // 清理过期的练习记录
     if (data.practiceRecords) {
       data.practiceRecords = data.practiceRecords.filter(
         record => now - record.timestamp < expireTime
       )
     }
-    
+
     // 清理过期的游戏分数
     if (data.gameScores) {
       data.gameScores = data.gameScores.filter(
@@ -239,20 +237,20 @@ export class StorageManager {
       exportDate: new Date().toISOString(),
       appVersion: this.version
     }
-    
+
     if (format === 'json') {
       return JSON.stringify(exportData, null, 2)
     } else if (format === 'csv') {
       return this.convertToCSV(exportData)
     }
-    
+
     return exportData
   }
 
   // 转换为CSV格式
   convertToCSV(data) {
     if (!data.practiceRecords) return ''
-    
+
     const headers = ['timestamp', 'speed', 'accuracy', 'time', 'charCount', 'lessonId']
     const rows = data.practiceRecords.map(record => [
       record.timestamp,
@@ -262,14 +260,14 @@ export class StorageManager {
       record.charCount,
       record.lessonId || ''
     ])
-    
+
     return [headers, ...rows].map(row => row.join(',')).join('\n')
   }
 
   // 获取数据统计
   getDataStats() {
     const data = this.getAllData()
-    
+
     return {
       practiceRecords: data.practiceRecords ? data.practiceRecords.length : 0,
       gameScores: data.gameScores ? data.gameScores.length : 0,

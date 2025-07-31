@@ -20,19 +20,19 @@ export class ThemeManager {
   // 加载主题
   loadTheme() {
     if (!this.store) return
-    
+
     // 从localStorage加载主题设置
     const savedTheme = localStorage.getItem('theme')
     if (savedTheme && this.store.themes[savedTheme]) {
       this.store.changeTheme(savedTheme)
     }
-    
+
     // 应用主题
     this.applyTheme()
-    
+
     // 监听系统主题变化
     if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
         if (this.store.currentTheme === 'auto') {
           this.applyTheme()
         }
@@ -44,14 +44,14 @@ export class ThemeManager {
   applyTheme() {
     const theme = this.getCurrentTheme()
     const root = document.documentElement
-    
+
     // 设置CSS变量
     root.style.setProperty('--primary-color', this.getColorValue(theme.colors.primary))
     root.style.setProperty('--secondary-color', this.getColorValue(theme.colors.secondary))
     root.style.setProperty('--accent-color', this.getColorValue(theme.colors.accent))
     root.style.setProperty('--background-color', this.getColorValue(theme.colors.background))
     root.style.setProperty('--text-color', this.getColorValue(theme.colors.text))
-    
+
     // 设置暗色模式
     if (theme.name === '暗黑主题' || this.isSystemDark()) {
       root.classList.add('dark')
@@ -62,8 +62,17 @@ export class ThemeManager {
 
   // 获取当前主题
   getCurrentTheme() {
-    if (!this.store) return { colors: { primary: 'blue', secondary: 'indigo', accent: 'purple', background: 'gray', text: 'gray' } }
-    
+    if (!this.store)
+      return {
+        colors: {
+          primary: 'blue',
+          secondary: 'indigo',
+          accent: 'purple',
+          background: 'gray',
+          text: 'gray'
+        }
+      }
+
     if (this.store.currentTheme === 'auto') {
       return this.isSystemDark() ? this.store.themes.dark : this.store.themes.light
     }
@@ -119,7 +128,7 @@ export class ThemeManager {
       colors,
       isCustom: true
     }
-    
+
     this.store.themes[`custom-${Date.now()}`] = customTheme
     return customTheme
   }
@@ -129,7 +138,7 @@ export class ThemeManager {
     if (!this.store) return
     if (this.store.themes[themeKey] && this.store.themes[themeKey].isCustom) {
       delete this.store.themes[themeKey]
-      
+
       // 如果删除的是当前主题，切换到默认主题
       if (this.store.currentTheme === themeKey) {
         this.changeTheme('default')
@@ -142,11 +151,15 @@ export class ThemeManager {
     if (!this.store) return null
     const theme = this.store.themes[themeKey]
     if (theme) {
-      return JSON.stringify({
-        name: theme.name,
-        colors: theme.colors,
-        exportDate: new Date().toISOString()
-      }, null, 2)
+      return JSON.stringify(
+        {
+          name: theme.name,
+          colors: theme.colors,
+          exportDate: new Date().toISOString()
+        },
+        null,
+        2
+      )
     }
     return null
   }
@@ -185,11 +198,11 @@ export function useTheme() {
   } catch (error) {
     console.warn('Failed to load app store:', error)
   }
-  
+
   return {
     currentTheme: store?.state?.currentTheme || 'default',
     themes: store?.state?.themes || {},
-    changeTheme: (theme) => store?.changeTheme(theme),
+    changeTheme: theme => store?.changeTheme(theme),
     getCurrentTheme: () => themeManager.getCurrentTheme(),
     applyTheme: () => themeManager.applyTheme()
   }

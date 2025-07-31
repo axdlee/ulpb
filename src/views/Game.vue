@@ -6,9 +6,7 @@
         <div class="bg-white rounded-lg shadow-sm overflow-hidden">
           <div class="p-6">
             <h2 class="text-2xl font-bold text-gray-900">趣味游戏</h2>
-            <p class="mt-1 text-sm text-gray-500">
-              通过有趣的游戏来练习双拼输入
-            </p>
+            <p class="mt-1 text-sm text-gray-500">通过有趣的游戏来练习双拼输入</p>
             <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <!-- 下落方块 -->
               <div
@@ -22,9 +20,7 @@
                 </div>
                 <div class="p-4">
                   <h3 class="text-lg font-medium text-gray-900">双拼方块</h3>
-                  <p class="mt-1 text-sm text-gray-500">
-                    击打下落的汉字，练习双拼输入速度
-                  </p>
+                  <p class="mt-1 text-sm text-gray-500">击打下落的汉字，练习双拼输入速度</p>
                 </div>
               </div>
 
@@ -40,9 +36,7 @@
                 </div>
                 <div class="p-4">
                   <h3 class="text-lg font-medium text-gray-900">记忆配对</h3>
-                  <p class="mt-1 text-sm text-gray-500">
-                    配对汉字和双拼组合，加深记忆
-                  </p>
+                  <p class="mt-1 text-sm text-gray-500">配对汉字和双拼组合，加深记忆</p>
                 </div>
               </div>
 
@@ -58,9 +52,7 @@
                 </div>
                 <div class="p-4">
                   <h3 class="text-lg font-medium text-gray-900">速度挑战</h3>
-                  <p class="mt-1 text-sm text-gray-500">
-                    限时输入，挑战你的极限速度
-                  </p>
+                  <p class="mt-1 text-sm text-gray-500">限时输入，挑战你的极限速度</p>
                 </div>
               </div>
             </div>
@@ -122,11 +114,7 @@
 
               <!-- 记忆配对游戏 -->
               <div v-if="currentGame === 'memory'" class="grid grid-cols-4 gap-4">
-                <div
-                  v-for="card in memoryCards"
-                  :key="card.id"
-                  class="aspect-w-1 aspect-h-1"
-                >
+                <div v-for="card in memoryCards" :key="card.id" class="aspect-w-1 aspect-h-1">
                   <button
                     class="w-full h-full flex items-center justify-center text-lg font-medium rounded-lg transition-all"
                     :class="{
@@ -229,286 +217,284 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
-import { useShuangpinStore } from '../stores/shuangpin'
+  import { ref, computed, onUnmounted } from 'vue'
+  import { useShuangpinStore } from '../stores/shuangpin'
 
-const store = useShuangpinStore()
+  const store = useShuangpinStore()
 
-// 游戏状态
-const currentGame = ref(null)
-const score = ref(0)
-const gameTime = ref(0)
-const gameInput = ref('')
-const gameTimer = ref(null)
-const gameDuration = 60 // 游戏时长（秒）
-const timeLeft = ref(gameDuration)
+  // 游戏状态
+  const currentGame = ref(null)
+  const score = ref(0)
+  const gameTime = ref(0)
+  const gameInput = ref('')
+  const gameTimer = ref(null)
+  const gameDuration = 60 // 游戏时长（秒）
+  const timeLeft = ref(gameDuration)
 
-// 下落方块游戏状态
-const fallingBlocks = ref([])
-const fallingTimer = ref(null)
+  // 下落方块游戏状态
+  const fallingBlocks = ref([])
+  const fallingTimer = ref(null)
 
-// 记忆配对游戏状态
-const memoryCards = ref([])
-const flippedCards = ref([])
+  // 记忆配对游戏状态
+  const memoryCards = ref([])
+  const flippedCards = ref([])
 
-// 速度挑战游戏状态
-const currentChar = ref('')
-const currentPinyin = ref('')
+  // 速度挑战游戏状态
+  const currentChar = ref('')
+  const currentPinyin = ref('')
 
-// 游戏标题和描述
-const gameTitle = computed(() => {
-  switch (currentGame.value) {
-    case 'falling':
-      return '双拼方块'
-    case 'memory':
-      return '记忆配对'
-    case 'speed':
-      return '速度挑战'
-    default:
-      return ''
-  }
-})
-
-const gameDescription = computed(() => {
-  switch (currentGame.value) {
-    case 'falling':
-      return '输入正确的双拼组合击打下落的汉字'
-    case 'memory':
-      return '找出配对的汉字和双拼组合'
-    case 'speed':
-      return '在限定时间内输入尽可能多的汉字'
-    default:
-      return ''
-  }
-})
-
-// 历史最高分
-const topScores = computed(() => {
-  return store.gameScores
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 10)
-})
-
-// 开始游戏
-const startGame = (type) => {
-  currentGame.value = type
-  score.value = 0
-  gameTime.value = 0
-  timeLeft.value = gameDuration
-  gameInput.value = ''
-
-  // 清除之前的定时器
-  clearInterval(gameTimer.value)
-  clearInterval(fallingTimer.value)
-
-  // 开始游戏定时器
-  gameTimer.value = setInterval(() => {
-    gameTime.value++
-    if (currentGame.value === 'speed') {
-      timeLeft.value--
-      if (timeLeft.value <= 0) {
-        endGame()
-      }
+  // 游戏标题和描述
+  const gameTitle = computed(() => {
+    switch (currentGame.value) {
+      case 'falling':
+        return '双拼方块'
+      case 'memory':
+        return '记忆配对'
+      case 'speed':
+        return '速度挑战'
+      default:
+        return ''
     }
-  }, 1000)
-
-  // 初始化游戏
-  switch (type) {
-    case 'falling':
-      initFallingGame()
-      break
-    case 'memory':
-      initMemoryGame()
-      break
-    case 'speed':
-      initSpeedGame()
-      break
-  }
-}
-
-// 初始化下落方块游戏
-const initFallingGame = () => {
-  fallingBlocks.value = []
-  fallingTimer.value = setInterval(() => {
-    // 添加新方块
-    if (Math.random() < 0.1) {
-      fallingBlocks.value.push({
-        id: Date.now(),
-        char: '测',
-        pinyin: 'ce',
-        x: Math.random() * 80 + 10,
-        y: 0
-      })
-    }
-
-    // 更新方块位置
-    fallingBlocks.value.forEach(block => {
-      block.y += 1
-    })
-
-    // 移除超出边界的方块
-    fallingBlocks.value = fallingBlocks.value.filter(block => block.y < 100)
-  }, 50)
-}
-
-// 初始化记忆配对游戏
-const initMemoryGame = () => {
-  const pairs = [
-    { char: '测', pinyin: 'ce' },
-    { char: '试', pinyin: 'shi' },
-    { char: '双', pinyin: 'shuang' },
-    { char: '拼', pinyin: 'pin' },
-    { char: '输', pinyin: 'shu' },
-    { char: '入', pinyin: 'ru' },
-    { char: '法', pinyin: 'fa' },
-    { char: '好', pinyin: 'hao' }
-  ]
-
-  const cards = []
-  pairs.forEach(pair => {
-    cards.push(
-      {
-        id: `char-${pair.char}`,
-        content: pair.char,
-        type: 'char',
-        pair: pair.pinyin,
-        isFlipped: false,
-        isMatched: false
-      },
-      {
-        id: `pinyin-${pair.pinyin}`,
-        content: pair.pinyin,
-        type: 'pinyin',
-        pair: pair.char,
-        isFlipped: false,
-        isMatched: false
-      }
-    )
   })
 
-  // 随机排序
-  memoryCards.value = cards.sort(() => Math.random() - 0.5)
-}
+  const gameDescription = computed(() => {
+    switch (currentGame.value) {
+      case 'falling':
+        return '输入正确的双拼组合击打下落的汉字'
+      case 'memory':
+        return '找出配对的汉字和双拼组合'
+      case 'speed':
+        return '在限定时间内输入尽可能多的汉字'
+      default:
+        return ''
+    }
+  })
 
-// 初始化速度挑战游戏
-const initSpeedGame = () => {
-  generateNewChar()
-}
+  // 历史最高分
+  const topScores = computed(() => {
+    return store.gameScores.sort((a, b) => b.score - a.score).slice(0, 10)
+  })
 
-// 生成新的汉字
-const generateNewChar = () => {
-  currentChar.value = '测'
-  currentPinyin.value = 'ce'
-}
+  // 开始游戏
+  const startGame = type => {
+    currentGame.value = type
+    score.value = 0
+    gameTime.value = 0
+    timeLeft.value = gameDuration
+    gameInput.value = ''
 
-// 处理游戏输入
-const handleGameInput = () => {
-  const input = gameInput.value.trim()
-  
-  switch (currentGame.value) {
-    case 'falling':
-      handleFallingInput(input)
-      break
-    case 'speed':
-      handleSpeedInput(input)
-      break
+    // 清除之前的定时器
+    clearInterval(gameTimer.value)
+    clearInterval(fallingTimer.value)
+
+    // 开始游戏定时器
+    gameTimer.value = setInterval(() => {
+      gameTime.value++
+      if (currentGame.value === 'speed') {
+        timeLeft.value--
+        if (timeLeft.value <= 0) {
+          endGame()
+        }
+      }
+    }, 1000)
+
+    // 初始化游戏
+    switch (type) {
+      case 'falling':
+        initFallingGame()
+        break
+      case 'memory':
+        initMemoryGame()
+        break
+      case 'speed':
+        initSpeedGame()
+        break
+    }
   }
-  
-  gameInput.value = ''
-}
 
-// 处理下落方块游戏输入
-const handleFallingInput = (input) => {
-  const hitBlock = fallingBlocks.value.find(block => input === block.pinyin)
-  if (hitBlock) {
-    score.value += Math.max(1, Math.floor((100 - hitBlock.y) / 10))
-    fallingBlocks.value = fallingBlocks.value.filter(block => block !== hitBlock)
+  // 初始化下落方块游戏
+  const initFallingGame = () => {
+    fallingBlocks.value = []
+    fallingTimer.value = setInterval(() => {
+      // 添加新方块
+      if (Math.random() < 0.1) {
+        fallingBlocks.value.push({
+          id: Date.now(),
+          char: '测',
+          pinyin: 'ce',
+          x: Math.random() * 80 + 10,
+          y: 0
+        })
+      }
+
+      // 更新方块位置
+      fallingBlocks.value.forEach(block => {
+        block.y += 1
+      })
+
+      // 移除超出边界的方块
+      fallingBlocks.value = fallingBlocks.value.filter(block => block.y < 100)
+    }, 50)
   }
-}
 
-// 处理速度挑战游戏输入
-const handleSpeedInput = (input) => {
-  if (input === currentPinyin.value) {
-    score.value++
+  // 初始化记忆配对游戏
+  const initMemoryGame = () => {
+    const pairs = [
+      { char: '测', pinyin: 'ce' },
+      { char: '试', pinyin: 'shi' },
+      { char: '双', pinyin: 'shuang' },
+      { char: '拼', pinyin: 'pin' },
+      { char: '输', pinyin: 'shu' },
+      { char: '入', pinyin: 'ru' },
+      { char: '法', pinyin: 'fa' },
+      { char: '好', pinyin: 'hao' }
+    ]
+
+    const cards = []
+    pairs.forEach(pair => {
+      cards.push(
+        {
+          id: `char-${pair.char}`,
+          content: pair.char,
+          type: 'char',
+          pair: pair.pinyin,
+          isFlipped: false,
+          isMatched: false
+        },
+        {
+          id: `pinyin-${pair.pinyin}`,
+          content: pair.pinyin,
+          type: 'pinyin',
+          pair: pair.char,
+          isFlipped: false,
+          isMatched: false
+        }
+      )
+    })
+
+    // 随机排序
+    memoryCards.value = cards.sort(() => Math.random() - 0.5)
+  }
+
+  // 初始化速度挑战游戏
+  const initSpeedGame = () => {
     generateNewChar()
   }
-}
 
-// 翻转记忆卡片
-const flipCard = (card) => {
-  if (flippedCards.value.length === 2) return
-  
-  card.isFlipped = true
-  flippedCards.value.push(card)
-  
-  if (flippedCards.value.length === 2) {
-    const [first, second] = flippedCards.value
-    if (first.pair === second.content && second.pair === first.content) {
-      // 匹配成功
-      first.isMatched = true
-      second.isMatched = true
-      score.value += 10
-      
-      // 检查游戏是否结束
-      if (memoryCards.value.every(card => card.isMatched)) {
-        endGame()
-      }
-    } else {
-      // 匹配失败，翻回
-      setTimeout(() => {
-        first.isFlipped = false
-        second.isFlipped = false
-      }, 1000)
+  // 生成新的汉字
+  const generateNewChar = () => {
+    currentChar.value = '测'
+    currentPinyin.value = 'ce'
+  }
+
+  // 处理游戏输入
+  const handleGameInput = () => {
+    const input = gameInput.value.trim()
+
+    switch (currentGame.value) {
+      case 'falling':
+        handleFallingInput(input)
+        break
+      case 'speed':
+        handleSpeedInput(input)
+        break
     }
+
+    gameInput.value = ''
+  }
+
+  // 处理下落方块游戏输入
+  const handleFallingInput = input => {
+    const hitBlock = fallingBlocks.value.find(block => input === block.pinyin)
+    if (hitBlock) {
+      score.value += Math.max(1, Math.floor((100 - hitBlock.y) / 10))
+      fallingBlocks.value = fallingBlocks.value.filter(block => block !== hitBlock)
+    }
+  }
+
+  // 处理速度挑战游戏输入
+  const handleSpeedInput = input => {
+    if (input === currentPinyin.value) {
+      score.value++
+      generateNewChar()
+    }
+  }
+
+  // 翻转记忆卡片
+  const flipCard = card => {
+    if (flippedCards.value.length === 2) return
+
+    card.isFlipped = true
+    flippedCards.value.push(card)
+
+    if (flippedCards.value.length === 2) {
+      const [first, second] = flippedCards.value
+      if (first.pair === second.content && second.pair === first.content) {
+        // 匹配成功
+        first.isMatched = true
+        second.isMatched = true
+        score.value += 10
+
+        // 检查游戏是否结束
+        if (memoryCards.value.every(card => card.isMatched)) {
+          endGame()
+        }
+      } else {
+        // 匹配失败，翻回
+        setTimeout(() => {
+          first.isFlipped = false
+          second.isFlipped = false
+        }, 1000)
+      }
+      flippedCards.value = []
+    }
+  }
+
+  // 结束游戏
+  const endGame = () => {
+    clearInterval(gameTimer.value)
+    clearInterval(fallingTimer.value)
+
+    // 记录分数
+    store.recordGameScore(score.value, currentGame.value)
+
+    // 重置游戏状态
+    currentGame.value = null
+    gameInput.value = ''
+    fallingBlocks.value = []
+    memoryCards.value = []
     flippedCards.value = []
   }
-}
 
-// 结束游戏
-const endGame = () => {
-  clearInterval(gameTimer.value)
-  clearInterval(fallingTimer.value)
-  
-  // 记录分数
-  store.recordGameScore(score.value, currentGame.value)
-  
-  // 重置游戏状态
-  currentGame.value = null
-  gameInput.value = ''
-  fallingBlocks.value = []
-  memoryCards.value = []
-  flippedCards.value = []
-}
-
-// 格式化时间
-const formatTime = (seconds) => {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-}
-
-// 格式化日期
-const formatDate = (timestamp) => {
-  return new Date(timestamp).toLocaleDateString()
-}
-
-// 获取游戏名称
-const getGameName = (type) => {
-  switch (type) {
-    case 'falling':
-      return '双拼方块'
-    case 'memory':
-      return '记忆配对'
-    case 'speed':
-      return '速度挑战'
-    default:
-      return type
+  // 格式化时间
+  const formatTime = seconds => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
   }
-}
 
-// 组件卸载时清理定时器
-onUnmounted(() => {
-  clearInterval(gameTimer.value)
-  clearInterval(fallingTimer.value)
-})
-</script> 
+  // 格式化日期
+  const formatDate = timestamp => {
+    return new Date(timestamp).toLocaleDateString()
+  }
+
+  // 获取游戏名称
+  const getGameName = type => {
+    switch (type) {
+      case 'falling':
+        return '双拼方块'
+      case 'memory':
+        return '记忆配对'
+      case 'speed':
+        return '速度挑战'
+      default:
+        return type
+    }
+  }
+
+  // 组件卸载时清理定时器
+  onUnmounted(() => {
+    clearInterval(gameTimer.value)
+    clearInterval(fallingTimer.value)
+  })
+</script>

@@ -1,12 +1,12 @@
 // 成就类型
 export const ACHIEVEMENT_TYPES = {
-  PRACTICE_TIME: 'practice_time',    // 练习时长
-  CHAR_COUNT: 'char_count',          // 练习字数
-  SPEED: 'speed',                    // 打字速度
-  ACCURACY: 'accuracy',              // 正确率
-  LESSON_COMPLETE: 'lesson_complete',// 完成课程数
-  STREAK: 'streak',                  // 连续打卡
-  REVIEW: 'review'                   // 复习完成
+  PRACTICE_TIME: 'practice_time', // 练习时长
+  CHAR_COUNT: 'char_count', // 练习字数
+  SPEED: 'speed', // 打字速度
+  ACCURACY: 'accuracy', // 正确率
+  LESSON_COMPLETE: 'lesson_complete', // 完成课程数
+  STREAK: 'streak', // 连续打卡
+  REVIEW: 'review' // 复习完成
 }
 
 // 成就列表
@@ -293,4 +293,4 @@ export function checkAchievement(type, value) {
   return achievements
     .filter(achievement => achievement.type === type)
     .filter(achievement => value >= achievement.requirement)
-} 
+}

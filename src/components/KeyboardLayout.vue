@@ -13,7 +13,7 @@
           @keyPress="handleKeyPress"
         />
       </div>
-      
+
       <!-- 第二行 -->
       <div class="keyboard-row flex justify-center space-x-1 mb-2">
         <KeyButton
@@ -25,7 +25,7 @@
           @keyPress="handleKeyPress"
         />
       </div>
-      
+
       <!-- 第三行 -->
       <div class="keyboard-row flex justify-center space-x-1 mb-2">
         <KeyButton
@@ -37,7 +37,7 @@
           @keyPress="handleKeyPress"
         />
       </div>
-      
+
       <!-- 空格键 -->
       <div class="keyboard-row flex justify-center">
         <KeyButton
@@ -48,7 +48,7 @@
         />
       </div>
     </div>
-    
+
     <!-- 图例 -->
     <div v-if="showLegend" class="mt-4 flex flex-wrap justify-center space-x-4 text-sm">
       <div class="flex items-center space-x-2">
@@ -72,90 +72,90 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useShuangpinStore } from '../stores/shuangpin'
-import KeyButton from './KeyButton.vue'
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
+  import { useShuangpinStore } from '../stores/shuangpin'
+  import KeyButton from './KeyButton.vue'
 
-const store = useShuangpinStore()
+  const store = useShuangpinStore()
 
-const props = defineProps({
-  highlightedKeys: {
-    type: Array,
-    default: () => []
-  },
-  showLegend: {
-    type: Boolean,
-    default: true
-  },
-  interactive: {
-    type: Boolean,
-    default: true
+  const props = defineProps({
+    highlightedKeys: {
+      type: Array,
+      default: () => []
+    },
+    showLegend: {
+      type: Boolean,
+      default: true
+    },
+    interactive: {
+      type: Boolean,
+      default: true
+    }
+  })
+
+  const emit = defineEmits(['keyPress'])
+
+  // 当前按下的键
+  const pressedKeys = ref([])
+
+  // 键盘布局
+  const keyboardLayout = computed(() => store.getCurrentSchemeLayout)
+
+  const row1 = computed(() => keyboardLayout.value.slice(0, 10))
+  const row2 = computed(() => keyboardLayout.value.slice(10, 20))
+  const row3 = computed(() => keyboardLayout.value.slice(20, 30))
+
+  // 处理按键事件
+  const handleKeyPress = key => {
+    emit('keyPress', key)
   }
-})
 
-const emit = defineEmits(['keyPress'])
+  // 键盘事件监听
+  const handleKeyDown = event => {
+    if (!props.interactive) return
 
-// 当前按下的键
-const pressedKeys = ref([])
+    const key = event.key.toLowerCase()
+    if (!pressedKeys.value.includes(key)) {
+      pressedKeys.value.push(key)
+    }
 
-// 键盘布局
-const keyboardLayout = computed(() => store.getCurrentSchemeLayout)
-
-const row1 = computed(() => keyboardLayout.value.slice(0, 10))
-const row2 = computed(() => keyboardLayout.value.slice(10, 20))
-const row3 = computed(() => keyboardLayout.value.slice(20, 30))
-
-// 处理按键事件
-const handleKeyPress = (key) => {
-  emit('keyPress', key)
-}
-
-// 键盘事件监听
-const handleKeyDown = (event) => {
-  if (!props.interactive) return
-  
-  const key = event.key.toLowerCase()
-  if (!pressedKeys.value.includes(key)) {
-    pressedKeys.value.push(key)
+    // 阻止默认行为
+    if (/^[a-z;,./]$/.test(key) || key === ' ') {
+      event.preventDefault()
+      handleKeyPress(key === ' ' ? 'space' : key)
+    }
   }
-  
-  // 阻止默认行为
-  if (/^[a-z;,./]$/.test(key) || key === ' ') {
-    event.preventDefault()
-    handleKeyPress(key === ' ' ? 'space' : key)
-  }
-}
 
-const handleKeyUp = (event) => {
-  if (!props.interactive) return
-  
-  const key = event.key.toLowerCase()
-  pressedKeys.value = pressedKeys.value.filter(k => k !== key)
-}
+  const handleKeyUp = event => {
+    if (!props.interactive) return
 
-// 生命周期
-onMounted(() => {
-  if (props.interactive) {
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
+    const key = event.key.toLowerCase()
+    pressedKeys.value = pressedKeys.value.filter(k => k !== key)
   }
-})
 
-onUnmounted(() => {
-  if (props.interactive) {
-    window.removeEventListener('keydown', handleKeyDown)
-    window.removeEventListener('keyup', handleKeyUp)
-  }
-})
+  // 生命周期
+  onMounted(() => {
+    if (props.interactive) {
+      window.addEventListener('keydown', handleKeyDown)
+      window.addEventListener('keyup', handleKeyUp)
+    }
+  })
+
+  onUnmounted(() => {
+    if (props.interactive) {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  })
 </script>
 
 <style scoped>
-.keyboard-layout {
-  max-width: 600px;
-  margin: 0 auto;
-}
+  .keyboard-layout {
+    max-width: 600px;
+    margin: 0 auto;
+  }
 
-.keyboard-row {
-  min-height: 48px;
-}
+  .keyboard-row {
+    min-height: 48px;
+  }
 </style>
