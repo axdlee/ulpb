@@ -4,31 +4,81 @@ import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue({
+      script: {
+        defineModel: true,
+        propsDestructure: true
+      }
+    })
+  ],
 
   // Path aliases
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      '@components': resolve(__dirname, 'src/components'),
+      '@views': resolve(__dirname, 'src/views'),
+      '@stores': resolve(__dirname, 'src/stores'),
+      '@utils': resolve(__dirname, 'src/utils'),
+      '@core': resolve(__dirname, 'src/core'),
+      '@data': resolve(__dirname, 'src/data')
     },
   },
 
-  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-  clearScreen: false,
-  // tauri expects a fixed port, fail if that port is not available
+  // 开发服务器配置
   server: {
     port: 1420,
     strictPort: true,
+    host: true,
+    hmr: {
+      overlay: true
+    }
   },
-  // to make use of `TAURI_DEBUG` and other env variables
-  // https://tauri.studio/v1/api/config#buildconfig.beforedevcommand
+
+  // 预览服务器配置
+  preview: {
+    port: 1421,
+    strictPort: true
+  },
+
+  // 环境变量前缀
   envPrefix: ['VITE_', 'TAURI_'],
+
+  // 构建配置
   build: {
-    // Tauri supports es2021
     target: ['es2021', 'chrome100', 'safari13'],
-    // don't minify for debug builds
     minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
-    // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_DEBUG,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router', 'pinia'],
+          charts: ['chart.js'],
+          utils: ['pinyin-pro']
+        }
+      }
+    },
+    // 优化构建性能
+    chunkSizeWarningLimit: 1000
   },
+
+  // 优化依赖预构建
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'pinia', 'chart.js', 'pinyin-pro'],
+    exclude: ['@tauri-apps/api']
+  },
+
+  // CSS 配置
+  css: {
+    devSourcemap: true,
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@import "@/styles/variables.scss";`
+      }
+    }
+  },
+
+  // 清屏配置
+  clearScreen: false
 }) 

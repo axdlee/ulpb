@@ -14,8 +14,11 @@
     "chart.js": "^4.5.0",
     "pinia": "^2.1.7",
     "pinyin-pro": "^3.26.0",
-    "vue": "^3.3.4",
-    "vue-router": "^4.2.5"
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0",
+    "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/typography": "^0.5.10",
+    "@tailwindcss/aspect-ratio": "^0.4.2"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.5.8",
@@ -23,6 +26,30 @@
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.24",
     "tailwindcss": "^3.3.2",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.20.1",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "prettier": "^3.2.5",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.2",
+    "vitest": "^1.3.1",
+    "@vue/test-utils": "^2.4.4"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "lint": "eslint src --ext .vue,.js,.ts --fix",
+    "format": "prettier --write src/**/*.{vue,js,ts,css,md}",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{vue,js,ts}": ["eslint --fix", "prettier --write"],
+    "*.{css,md,json}": ["prettier --write"]
   }
 }
