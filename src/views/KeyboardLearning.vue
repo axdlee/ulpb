@@ -466,11 +466,24 @@
 
   const handleKeyClick = key => {
     // 处理键位点击，显示相关信息
-    const keyInfo = shuangpinStore.getKeyInfo(key)
-    if (keyInfo) {
+    // key 是一个对象，包含 key, display, type 等属性
+    const keyChar = typeof key === 'string' ? key : key.key
+    if (!keyChar) return
+    
+    try {
+      const keyInfo = shuangpinStore.getKeyInfo(keyChar)
+      if (keyInfo) {
+        appStore.addNotification({
+          type: 'info',
+          message: `${keyChar.toUpperCase()}: ${keyInfo.description}`,
+          duration: 2000
+        })
+      }
+    } catch (error) {
+      console.error('获取键位信息失败:', error)
       appStore.addNotification({
-        type: 'info',
-        message: `${key.toUpperCase()}: ${keyInfo.description}`,
+        type: 'error',
+        message: '获取键位信息失败',
         duration: 2000
       })
     }
