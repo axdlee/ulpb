@@ -28,8 +28,8 @@ export default defineConfig({
 
   // 开发服务器配置
   server: {
-    port: 1420,
-    strictPort: true,
+    port: 1421,
+    strictPort: false,
     host: true,
     hmr: {
       overlay: true

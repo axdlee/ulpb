@@ -1,790 +1,483 @@
 /**
- * 成就系统
- * 管理用户成就、徽章、里程碑和奖励机制
+ * 成就系统核心模块
+ * 管理用户成就和里程碑
  */
 
-import { reactive, computed } from 'vue'
-import { storageManager } from '../../utils/storage.js'
-
-export class AchievementSystem {
+class AchievementSystem {
   constructor() {
-    this.state = reactive({
-      // 用户成就状态
-      unlockedAchievements: [],
-      achievementProgress: {},
-      
-      // 成就通知队列
-      pendingNotifications: [],
-      
-      // 统计数据
-      totalPoints: 0,
-      level: 1,
-      experiencePoints: 0,
-      nextLevelXP: 100,
-      
-      // 成就历史
-      achievementHistory: []
-    })
-
-    // 定义所有成就
-    this.achievements = this.defineAchievements()
-    
-    this.loadData()
-    this.calculateLevel()
+    this.achievements = this.initializeAchievements()
+    this.userAchievements = []
+    this.milestones = []
   }
 
-  /**
-   * 定义所有成就
-   */
-  defineAchievements() {
-    return {
-      // 速度相关成就
-      speed_10: {
+  init() {
+    console.log('Achievement system initialized')
+    this.loadUserAchievements()
+    return { success: true }
+  }
+
+  initializeAchievements() {
+    return [
+      // 速度成就
+      {
         id: 'speed_10',
-        category: 'speed',
         title: '起步者',
-        description: '达到10字/分钟的打字速度',
+        description: '打字速度达到10字/分钟',
         icon: '🚀',
-        points: 10,
-        xp: 50,
+        category: 'speed',
         condition: { type: 'speed', value: 10 },
-        rarity: 'common'
+        points: 10
       },
-      speed_20: {
+      {
         id: 'speed_20',
-        category: 'speed',
-        title: '进步中',
-        description: '达到20字/分钟的打字速度',
+        title: '进步者',
+        description: '打字速度达到20字/分钟',
         icon: '⚡',
-        points: 20,
-        xp: 100,
+        category: 'speed',
         condition: { type: 'speed', value: 20 },
-        rarity: 'common'
+        points: 20
       },
-      speed_40: {
-        id: 'speed_40',
+      {
+        id: 'speed_30',
+        title: '速度达人',
+        description: '打字速度达到30字/分钟',
+        icon: '🏃',
         category: 'speed',
-        title: '熟练者',
-        description: '达到40字/分钟的打字速度',
-        icon: '🌟',
-        points: 50,
-        xp: 200,
-        condition: { type: 'speed', value: 40 },
-        rarity: 'rare'
+        condition: { type: 'speed', value: 30 },
+        points: 30
       },
-      speed_60: {
-        id: 'speed_60',
+      {
+        id: 'speed_50',
+        title: '飞指如飞',
+        description: '打字速度达到50字/分钟',
+        icon: '🦅',
         category: 'speed',
-        title: '专家级',
-        description: '达到60字/分钟的打字速度',
-        icon: '👑',
-        points: 100,
-        xp: 500,
-        condition: { type: 'speed', value: 60 },
-        rarity: 'epic'
-      },
-      speed_80: {
-        id: 'speed_80',
-        category: 'speed',
-        title: '大师级',
-        description: '达到80字/分钟的打字速度',
-        icon: '🏆',
-        points: 200,
-        xp: 1000,
-        condition: { type: 'speed', value: 80 },
-        rarity: 'legendary'
+        condition: { type: 'speed', value: 50 },
+        points: 50
       },
 
-      // 准确率相关成就
-      accuracy_90: {
+      // 准确率成就
+      {
         id: 'accuracy_90',
-        category: 'accuracy',
         title: '精准射手',
-        description: '达到90%的准确率',
+        description: '准确率达到90%',
         icon: '🎯',
-        points: 30,
-        xp: 150,
+        category: 'accuracy',
         condition: { type: 'accuracy', value: 90 },
-        rarity: 'common'
+        points: 15
       },
-      accuracy_95: {
+      {
         id: 'accuracy_95',
-        category: 'accuracy',
         title: '神枪手',
-        description: '达到95%的准确率',
+        description: '准确率达到95%',
         icon: '🏹',
-        points: 60,
-        xp: 300,
-        condition: { type: 'accuracy', value: 95 },
-        rarity: 'rare'
-      },
-      accuracy_99: {
-        id: 'accuracy_99',
         category: 'accuracy',
+        condition: { type: 'accuracy', value: 95 },
+        points: 25
+      },
+      {
+        id: 'accuracy_99',
         title: '完美主义者',
-        description: '达到99%的准确率',
+        description: '准确率达到99%',
         icon: '💎',
-        points: 150,
-        xp: 750,
+        category: 'accuracy',
         condition: { type: 'accuracy', value: 99 },
-        rarity: 'epic'
+        points: 50
       },
 
-      // 练习时长相关成就
-      time_1h: {
+      // 练习时长成就
+      {
         id: 'time_1h',
-        category: 'time',
-        title: '入门练习者',
+        title: '初学者',
         description: '累计练习1小时',
         icon: '⏰',
-        points: 15,
-        xp: 75,
-        condition: { type: 'total_time', value: 3600 }, // 秒
-        rarity: 'common'
+        category: 'time',
+        condition: { type: 'totalTime', value: 3600000 }, // 1小时毫秒数
+        points: 10
       },
-      time_10h: {
+      {
         id: 'time_10h',
-        category: 'time',
-        title: '坚持不懈',
+        title: '勤奋者',
         description: '累计练习10小时',
-        icon: '⌚',
-        points: 50,
-        xp: 250,
-        condition: { type: 'total_time', value: 36000 },
-        rarity: 'rare'
+        icon: '📚',
+        category: 'time',
+        condition: { type: 'totalTime', value: 36000000 }, // 10小时毫秒数
+        points: 30
       },
-      time_50h: {
+      {
         id: 'time_50h',
-        category: 'time',
-        title: '持久战士',
+        title: '专家',
         description: '累计练习50小时',
-        icon: '🕰️',
-        points: 150,
-        xp: 750,
-        condition: { type: 'total_time', value: 180000 },
-        rarity: 'epic'
-      },
-      time_100h: {
-        id: 'time_100h',
+        icon: '🎓',
         category: 'time',
-        title: '练习大师',
-        description: '累计练习100小时',
-        icon: '⏳',
-        points: 300,
-        xp: 1500,
-        condition: { type: 'total_time', value: 360000 },
-        rarity: 'legendary'
+        condition: { type: 'totalTime', value: 180000000 }, // 50小时毫秒数
+        points: 100
       },
 
-      // 连续练习相关成就
-      streak_3: {
+      // 连续练习成就
+      {
         id: 'streak_3',
-        category: 'streak',
-        title: '三日之约',
+        title: '坚持者',
         description: '连续练习3天',
         icon: '🔥',
-        points: 25,
-        xp: 125,
+        category: 'streak',
         condition: { type: 'streak', value: 3 },
-        rarity: 'common'
+        points: 15
       },
-      streak_7: {
+      {
         id: 'streak_7',
-        category: 'streak',
-        title: '一周坚持',
+        title: '一周达人',
         description: '连续练习7天',
-        icon: '🌟',
-        points: 75,
-        xp: 375,
-        condition: { type: 'streak', value: 7 },
-        rarity: 'rare'
-      },
-      streak_30: {
-        id: 'streak_30',
+        icon: '📅',
         category: 'streak',
+        condition: { type: 'streak', value: 7 },
+        points: 30
+      },
+      {
+        id: 'streak_30',
         title: '月度冠军',
         description: '连续练习30天',
-        icon: '🏅',
-        points: 200,
-        xp: 1000,
+        icon: '👑',
+        category: 'streak',
         condition: { type: 'streak', value: 30 },
-        rarity: 'epic'
+        points: 100
+      },
+
+      // 课程完成成就
+      {
+        id: 'lessons_5',
+        title: '学习新手',
+        description: '完成5个课程',
+        icon: '📖',
+        category: 'lessons',
+        condition: { type: 'completedLessons', value: 5 },
+        points: 20
+      },
+      {
+        id: 'lessons_10',
+        title: '课程达人',
+        description: '完成10个课程',
+        icon: '🎒',
+        category: 'lessons',
+        condition: { type: 'completedLessons', value: 10 },
+        points: 40
+      },
+      {
+        id: 'lessons_all',
+        title: '全能学者',
+        description: '完成所有课程',
+        icon: '🏆',
+        category: 'lessons',
+        condition: { type: 'completedLessons', value: 15 },
+        points: 100
       },
 
       // 特殊成就
-      perfect_session: {
+      {
         id: 'perfect_session',
-        category: 'special',
-        title: '完美无瑕',
+        title: '完美表现',
         description: '单次练习100%准确率',
-        icon: '✨',
-        points: 50,
-        xp: 250,
-        condition: { type: 'session_accuracy', value: 100 },
-        rarity: 'rare'
-      },
-      speed_demon: {
-        id: 'speed_demon',
+        icon: '⭐',
         category: 'special',
-        title: '速度恶魔',
-        description: '单次练习超过100字/分钟',
-        icon: '👹',
-        points: 100,
-        xp: 500,
-        condition: { type: 'session_speed', value: 100 },
-        rarity: 'epic'
+        condition: { type: 'perfectSession', value: 100 },
+        points: 25
       },
-      night_owl: {
+      {
+        id: 'speed_burst',
+        title: '速度爆发',
+        description: '单次练习速度超过个人平均20%',
+        icon: '💨',
+        category: 'special',
+        condition: { type: 'speedBurst', value: 1.2 },
+        points: 20
+      },
+      {
         id: 'night_owl',
-        category: 'special',
         title: '夜猫子',
-        description: '在午夜12点后练习',
+        description: '在深夜(22:00-6:00)完成10次练习',
         icon: '🦉',
-        points: 30,
-        xp: 150,
-        condition: { type: 'late_night_practice', value: 1 },
-        rarity: 'common'
+        category: 'special',
+        condition: { type: 'nightSessions', value: 10 },
+        points: 15
       },
-      early_bird: {
+      {
         id: 'early_bird',
-        category: 'special',
-        title: '早起鸟儿',
-        description: '在早上6点前练习',
+        title: '早起鸟',
+        description: '在早晨(6:00-9:00)完成10次练习',
         icon: '🐦',
-        points: 30,
-        xp: 150,
-        condition: { type: 'early_morning_practice', value: 1 },
-        rarity: 'common'
-      },
-      marathon_session: {
-        id: 'marathon_session',
         category: 'special',
-        title: '马拉松选手',
-        description: '单次练习超过30分钟',
-        icon: '🏃',
-        points: 75,
-        xp: 375,
-        condition: { type: 'session_duration', value: 1800 }, // 30分钟
-        rarity: 'rare'
-      },
-
-      // 字符数相关成就
-      chars_1k: {
-        id: 'chars_1k',
-        category: 'characters',
-        title: '千字文',
-        description: '累计输入1000个字符',
-        icon: '📝',
-        points: 20,
-        xp: 100,
-        condition: { type: 'total_characters', value: 1000 },
-        rarity: 'common'
-      },
-      chars_10k: {
-        id: 'chars_10k',
-        category: 'characters',
-        title: '万字长文',
-        description: '累计输入10000个字符',
-        icon: '📚',
-        points: 100,
-        xp: 500,
-        condition: { type: 'total_characters', value: 10000 },
-        rarity: 'rare'
-      },
-      chars_100k: {
-        id: 'chars_100k',
-        category: 'characters',
-        title: '十万字豪',
-        description: '累计输入100000个字符',
-        icon: '📖',
-        points: 500,
-        xp: 2500,
-        condition: { type: 'total_characters', value: 100000 },
-        rarity: 'legendary'
+        condition: { type: 'morningSessions', value: 10 },
+        points: 15
       }
-    }
+    ]
   }
 
-  /**
-   * 检查并解锁成就
-   * @param {Object} sessionData - 练习会话数据
-   * @param {Object} userStats - 用户总体统计
-   */
-  checkAchievements(sessionData, userStats) {
+  checkAchievements(sessionResult, userStats) {
     const newAchievements = []
 
-    Object.values(this.achievements).forEach(achievement => {
-      if (this.isAchievementUnlocked(achievement.id)) {
-        return // 已解锁的成就跳过
+    this.achievements.forEach(achievement => {
+      // 跳过已获得的成就
+      if (this.userAchievements.some(ua => ua.id === achievement.id)) {
+        return
       }
 
-      if (this.checkAchievementCondition(achievement, sessionData, userStats)) {
-        this.unlockAchievement(achievement.id)
-        newAchievements.push(achievement)
-      } else {
-        // 更新进度
-        this.updateAchievementProgress(achievement, sessionData, userStats)
+      if (this.checkAchievementCondition(achievement, sessionResult, userStats)) {
+        const earnedAchievement = {
+          ...achievement,
+          earnedAt: Date.now(),
+          sessionId: sessionResult.id
+        }
+
+        this.userAchievements.push(earnedAchievement)
+        newAchievements.push(earnedAchievement)
       }
     })
 
     if (newAchievements.length > 0) {
-      this.processNewAchievements(newAchievements)
+      this.saveUserAchievements()
     }
 
-    this.saveData()
     return newAchievements
   }
 
-  /**
-   * 检查成就条件是否满足
-   */
-  checkAchievementCondition(achievement, sessionData, userStats) {
-    const { condition } = achievement
+  checkAchievementCondition(achievement, sessionResult, userStats) {
+    const condition = achievement.condition
 
     switch (condition.type) {
       case 'speed':
-        return userStats.averageSpeed >= condition.value
+        return sessionResult.speed >= condition.value
 
       case 'accuracy':
-        return userStats.averageAccuracy >= condition.value
+        return sessionResult.accuracy >= condition.value
 
-      case 'total_time':
+      case 'totalTime':
         return userStats.totalTime >= condition.value
-
-      case 'total_characters':
-        return userStats.totalCharacters >= condition.value
 
       case 'streak':
         return userStats.currentStreak >= condition.value
 
-      case 'session_speed':
-        return sessionData.speed >= condition.value
+      case 'completedLessons':
+        return (userStats.completedLessons || 0) >= condition.value
 
-      case 'session_accuracy':
-        return sessionData.accuracy >= condition.value
+      case 'perfectSession':
+        return sessionResult.accuracy === 100
 
-      case 'session_duration':
-        return sessionData.duration >= condition.value
+      case 'speedBurst':
+        return sessionResult.speed >= userStats.averageSpeed * condition.value
 
-      case 'late_night_practice':
-        const hour = new Date(sessionData.timestamp).getHours()
-        return hour >= 0 && hour < 6
+      case 'nightSessions':
+        return this.countNightSessions() >= condition.value
 
-      case 'early_morning_practice':
-        const morningHour = new Date(sessionData.timestamp).getHours()
-        return morningHour >= 5 && morningHour < 8
+      case 'morningSessions':
+        return this.countMorningSessions() >= condition.value
 
       default:
         return false
     }
   }
 
-  /**
-   * 更新成就进度
-   */
-  updateAchievementProgress(achievement, sessionData, userStats) {
-    const { condition } = achievement
-    let currentValue = 0
+  countNightSessions() {
+    // 这里需要访问会话历史，暂时返回0
+    return 0
+  }
+
+  countMorningSessions() {
+    // 这里需要访问会话历史，暂时返回0
+    return 0
+  }
+
+  getUserAchievements() {
+    return this.userAchievements
+  }
+
+  getAchievementsByCategory(category) {
+    return this.achievements.filter(a => a.category === category)
+  }
+
+  getUnlockedAchievements() {
+    return this.userAchievements
+  }
+
+  getLockedAchievements() {
+    const unlockedIds = this.userAchievements.map(ua => ua.id)
+    return this.achievements.filter(a => !unlockedIds.includes(a.id))
+  }
+
+  getAchievementProgress(achievementId, userStats) {
+    const achievement = this.achievements.find(a => a.id === achievementId)
+    if (!achievement) return 0
+
+    const condition = achievement.condition
 
     switch (condition.type) {
       case 'speed':
-        currentValue = userStats.averageSpeed
-        break
+        return Math.min((userStats.averageSpeed / condition.value) * 100, 100)
+
       case 'accuracy':
-        currentValue = userStats.averageAccuracy
-        break
-      case 'total_time':
-        currentValue = userStats.totalTime
-        break
-      case 'total_characters':
-        currentValue = userStats.totalCharacters
-        break
+        return Math.min((userStats.averageAccuracy / condition.value) * 100, 100)
+
+      case 'totalTime':
+        return Math.min((userStats.totalTime / condition.value) * 100, 100)
+
       case 'streak':
-        currentValue = userStats.currentStreak
-        break
+        return Math.min((userStats.currentStreak / condition.value) * 100, 100)
+
+      case 'completedLessons':
+        return Math.min(((userStats.completedLessons || 0) / condition.value) * 100, 100)
+
       default:
-        return
-    }
-
-    this.state.achievementProgress[achievement.id] = {
-      current: currentValue,
-      target: condition.value,
-      percentage: Math.min(100, Math.round((currentValue / condition.value) * 100))
+        return 0
     }
   }
 
-  /**
-   * 解锁成就
-   */
-  unlockAchievement(achievementId) {
-    if (this.isAchievementUnlocked(achievementId)) {
-      return false
-    }
-
-    const achievement = this.achievements[achievementId]
-    if (!achievement) {
-      return false
-    }
-
-    // 添加到已解锁列表
-    this.state.unlockedAchievements.push(achievementId)
-
-    // 增加积分和经验
-    this.state.totalPoints += achievement.points
-    this.addExperience(achievement.xp)
-
-    // 记录解锁历史
-    this.state.achievementHistory.push({
-      achievementId,
-      unlockedAt: Date.now(),
-      points: achievement.points,
-      xp: achievement.xp
-    })
-
-    // 添加到通知队列
-    this.state.pendingNotifications.push({
-      id: Date.now(),
-      achievement,
-      timestamp: Date.now()
-    })
-
-    return true
+  getTotalPoints() {
+    return this.userAchievements.reduce((total, achievement) => total + achievement.points, 0)
   }
 
-  /**
-   * 检查成就是否已解锁
-   */
-  isAchievementUnlocked(achievementId) {
-    return this.state.unlockedAchievements.includes(achievementId)
+  getUserLevel() {
+    const totalPoints = this.getTotalPoints()
+    
+    if (totalPoints < 50) return 1
+    if (totalPoints < 150) return 2
+    if (totalPoints < 300) return 3
+    if (totalPoints < 500) return 4
+    if (totalPoints < 800) return 5
+    
+    return Math.min(10, Math.floor(totalPoints / 200) + 1)
   }
 
-  /**
-   * 增加经验值
-   */
-  addExperience(xp) {
-    this.state.experiencePoints += xp
-
-    // 检查是否升级
-    while (this.state.experiencePoints >= this.state.nextLevelXP) {
-      this.levelUp()
+  getNextLevelProgress() {
+    const currentLevel = this.getUserLevel()
+    const currentPoints = this.getTotalPoints()
+    
+    const levelThresholds = [0, 50, 150, 300, 500, 800, 1200, 1700, 2300, 3000]
+    
+    if (currentLevel >= 10) {
+      return { current: currentPoints, required: currentPoints, progress: 100 }
+    }
+    
+    const currentThreshold = levelThresholds[currentLevel - 1]
+    const nextThreshold = levelThresholds[currentLevel]
+    const progress = ((currentPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100
+    
+    return {
+      current: currentPoints - currentThreshold,
+      required: nextThreshold - currentThreshold,
+      progress: Math.round(progress)
     }
   }
 
-  /**
-   * 升级
-   */
-  levelUp() {
-    this.state.experiencePoints -= this.state.nextLevelXP
-    this.state.level++
-    this.state.nextLevelXP = this.calculateNextLevelXP(this.state.level)
-
-    // 添加升级通知
-    this.state.pendingNotifications.push({
-      id: Date.now(),
-      type: 'level_up',
-      level: this.state.level,
-      timestamp: Date.now()
-    })
+  getRecentAchievements(limit = 5) {
+    return this.userAchievements
+      .sort((a, b) => b.earnedAt - a.earnedAt)
+      .slice(0, limit)
   }
 
-  /**
-   * 计算下一级所需经验
-   */
-  calculateNextLevelXP(level) {
-    return Math.floor(100 * Math.pow(1.5, level - 1))
-  }
-
-  /**
-   * 重新计算用户等级（用于数据修复）
-   */
-  calculateLevel() {
-    let totalXP = 0
-    this.state.achievementHistory.forEach(record => {
-      totalXP += record.xp
-    })
-
-    let level = 1
-    let requiredXP = 100
-
-    while (totalXP >= requiredXP) {
-      totalXP -= requiredXP
-      level++
-      requiredXP = this.calculateNextLevelXP(level)
-    }
-
-    this.state.level = level
-    this.state.experiencePoints = totalXP
-    this.state.nextLevelXP = requiredXP
-  }
-
-  /**
-   * 处理新解锁的成就
-   */
-  processNewAchievements(achievements) {
-    // 按稀有度排序，稀有的成就优先显示
-    const rarityOrder = { common: 1, rare: 2, epic: 3, legendary: 4 }
-    achievements.sort((a, b) => rarityOrder[b.rarity] - rarityOrder[a.rarity])
-
-    // 可以在这里添加特殊效果或奖励逻辑
-    achievements.forEach(achievement => {
-      if (achievement.rarity === 'legendary') {
-        // 传说级成就的特殊处理
-        this.triggerSpecialEffect(achievement)
-      }
-    })
-  }
-
-  /**
-   * 触发特殊效果
-   */
-  triggerSpecialEffect(achievement) {
-    // 可以实现特殊的视觉效果、音效等
-    console.log(`🎉 传说级成就解锁！${achievement.title}`)
-  }
-
-  /**
-   * 获取待显示的通知
-   */
-  getPendingNotifications() {
-    return [...this.state.pendingNotifications]
-  }
-
-  /**
-   * 清除通知
-   */
-  clearNotification(notificationId) {
-    const index = this.state.pendingNotifications.findIndex(n => n.id === notificationId)
-    if (index > -1) {
-      this.state.pendingNotifications.splice(index, 1)
-      this.saveData()
-    }
-  }
-
-  /**
-   * 清除所有通知
-   */
-  clearAllNotifications() {
-    this.state.pendingNotifications = []
-    this.saveData()
-  }
-
-  /**
-   * 获取成就统计
-   */
   getAchievementStats() {
+    const total = this.achievements.length
+    const unlocked = this.userAchievements.length
     const categories = {}
-    const totalAchievements = Object.keys(this.achievements).length
-    const unlockedCount = this.state.unlockedAchievements.length
 
-    // 按类别统计
-    Object.values(this.achievements).forEach(achievement => {
-      const category = achievement.category
-      if (!categories[category]) {
-        categories[category] = { total: 0, unlocked: 0 }
+    this.achievements.forEach(achievement => {
+      if (!categories[achievement.category]) {
+        categories[achievement.category] = { total: 0, unlocked: 0 }
       }
-      categories[category].total++
-      
-      if (this.isAchievementUnlocked(achievement.id)) {
-        categories[category].unlocked++
+      categories[achievement.category].total++
+    })
+
+    this.userAchievements.forEach(achievement => {
+      if (categories[achievement.category]) {
+        categories[achievement.category].unlocked++
       }
     })
 
     return {
-      total: totalAchievements,
-      unlocked: unlockedCount,
-      progress: Math.round((unlockedCount / totalAchievements) * 100),
+      total,
+      unlocked,
+      completionRate: Math.round((unlocked / total) * 100),
       categories,
-      totalPoints: this.state.totalPoints,
-      level: this.state.level,
-      experiencePoints: this.state.experiencePoints,
-      nextLevelXP: this.state.nextLevelXP
+      totalPoints: this.getTotalPoints(),
+      level: this.getUserLevel()
     }
   }
 
-  /**
-   * 获取分类成就列表
-   */
-  getAchievementsByCategory(category = null) {
-    const achievements = Object.values(this.achievements)
-    
-    if (category) {
-      return achievements.filter(a => a.category === category)
-    }
-
-    // 按类别分组
-    const grouped = {}
-    achievements.forEach(achievement => {
-      const cat = achievement.category
-      if (!grouped[cat]) {
-        grouped[cat] = []
+  loadUserAchievements() {
+    try {
+      const saved = localStorage.getItem('userAchievements')
+      if (saved) {
+        this.userAchievements = JSON.parse(saved)
       }
-      grouped[cat].push({
-        ...achievement,
-        unlocked: this.isAchievementUnlocked(achievement.id),
-        progress: this.state.achievementProgress[achievement.id]
-      })
-    })
-
-    return grouped
-  }
-
-  /**
-   * 获取推荐成就
-   */
-  getRecommendedAchievements(userStats) {
-    const recommendations = []
-
-    Object.values(this.achievements).forEach(achievement => {
-      if (this.isAchievementUnlocked(achievement.id)) {
-        return
-      }
-
-      const progress = this.state.achievementProgress[achievement.id]
-      if (progress && progress.percentage >= 50) {
-        recommendations.push({
-          ...achievement,
-          progress,
-          priority: this.calculateAchievementPriority(achievement, progress)
-        })
-      }
-    })
-
-    // 按优先级排序
-    recommendations.sort((a, b) => b.priority - a.priority)
-    return recommendations.slice(0, 5) // 返回前5个推荐
-  }
-
-  /**
-   * 计算成就优先级
-   */
-  calculateAchievementPriority(achievement, progress) {
-    let priority = progress.percentage
-
-    // 根据稀有度调整优先级
-    const rarityBonus = {
-      common: 1,
-      rare: 1.2,
-      epic: 1.5,
-      legendary: 2
-    }
-
-    priority *= rarityBonus[achievement.rarity] || 1
-
-    // 即将完成的成就优先级更高
-    if (progress.percentage >= 90) {
-      priority *= 1.5
-    }
-
-    return priority
-  }
-
-  /**
-   * 获取最近解锁的成就
-   */
-  getRecentAchievements(days = 7) {
-    const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000)
-    
-    return this.state.achievementHistory
-      .filter(record => record.unlockedAt > cutoff)
-      .map(record => ({
-        ...this.achievements[record.achievementId],
-        unlockedAt: record.unlockedAt
-      }))
-      .sort((a, b) => b.unlockedAt - a.unlockedAt)
-  }
-
-  /**
-   * 获取用户徽章
-   */
-  getUserBadges() {
-    const badges = []
-
-    // 基于等级的徽章
-    if (this.state.level >= 10) {
-      badges.push({ type: 'level', name: '十级学者', icon: '🎓' })
-    }
-    if (this.state.level >= 25) {
-      badges.push({ type: 'level', name: '二十五级专家', icon: '🏅' })
-    }
-    if (this.state.level >= 50) {
-      badges.push({ type: 'level', name: '五十级大师', icon: '👑' })
-    }
-
-    // 基于成就的徽章
-    const legendaryCount = this.state.unlockedAchievements.filter(id => 
-      this.achievements[id]?.rarity === 'legendary'
-    ).length
-
-    if (legendaryCount >= 1) {
-      badges.push({ type: 'achievement', name: '传说收集者', icon: '💎' })
-    }
-    if (legendaryCount >= 3) {
-      badges.push({ type: 'achievement', name: '传说大师', icon: '🌟' })
-    }
-
-    return badges
-  }
-
-  /**
-   * 保存数据
-   */
-  saveData() {
-    storageManager.setData('achievements', {
-      unlockedAchievements: this.state.unlockedAchievements,
-      achievementProgress: this.state.achievementProgress,
-      pendingNotifications: this.state.pendingNotifications,
-      totalPoints: this.state.totalPoints,
-      level: this.state.level,
-      experiencePoints: this.state.experiencePoints,
-      nextLevelXP: this.state.nextLevelXP,
-      achievementHistory: this.state.achievementHistory
-    })
-  }
-
-  /**
-   * 加载数据
-   */
-  loadData() {
-    const data = storageManager.getData('achievements', {})
-    
-    if (data.unlockedAchievements) {
-      Object.assign(this.state, data)
+    } catch (error) {
+      console.error('Failed to load user achievements:', error)
     }
   }
 
-  /**
-   * 重置所有成就（谨慎使用）
-   */
-  resetAchievements() {
-    Object.assign(this.state, {
-      unlockedAchievements: [],
-      achievementProgress: {},
-      pendingNotifications: [],
-      totalPoints: 0,
-      level: 1,
-      experiencePoints: 0,
-      nextLevelXP: 100,
-      achievementHistory: []
-    })
-    this.saveData()
+  saveUserAchievements() {
+    try {
+      localStorage.setItem('userAchievements', JSON.stringify(this.userAchievements))
+    } catch (error) {
+      console.error('Failed to save user achievements:', error)
+    }
   }
 
-  /**
-   * 导出成就数据
-   */
   exportAchievements() {
     return {
-      achievements: this.state.unlockedAchievements.map(id => ({
-        id,
-        achievement: this.achievements[id],
-        unlockedAt: this.state.achievementHistory.find(h => h.achievementId === id)?.unlockedAt
-      })),
+      userAchievements: this.userAchievements,
       stats: this.getAchievementStats(),
-      badges: this.getUserBadges(),
-      exportedAt: new Date().toISOString()
+      exportTime: Date.now()
     }
+  }
+
+  importAchievements(data) {
+    try {
+      if (data.userAchievements) {
+        this.userAchievements = data.userAchievements
+        this.saveUserAchievements()
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Failed to import achievements:', error)
+      return false
+    }
+  }
+
+  resetAchievements() {
+    this.userAchievements = []
+    this.saveUserAchievements()
+  }
+
+  // 添加自定义成就
+  addCustomAchievement(achievement) {
+    const customAchievement = {
+      ...achievement,
+      id: `custom_${Date.now()}`,
+      category: 'custom',
+      isCustom: true
+    }
+
+    this.achievements.push(customAchievement)
+    return customAchievement
+  }
+
+  // 移除自定义成就
+  removeCustomAchievement(achievementId) {
+    const index = this.achievements.findIndex(a => a.id === achievementId && a.isCustom)
+    if (index > -1) {
+      this.achievements.splice(index, 1)
+      
+      // 同时移除用户已获得的该成就
+      const userIndex = this.userAchievements.findIndex(ua => ua.id === achievementId)
+      if (userIndex > -1) {
+        this.userAchievements.splice(userIndex, 1)
+        this.saveUserAchievements()
+      }
+      
+      return true
+    }
+    return false
   }
 }
 
-// 创建全局成就系统实例
+// 全局实例
 export const globalAchievementSystem = new AchievementSystem()
