@@ -34,11 +34,11 @@
     <transition name="loading-overlay">
       <div 
         class="loading-overlay" 
-        v-if="appStore.isLoading"
+        v-if="appStore.state.isLoading"
       >
         <div class="loading-spinner">
           <LoadingSpinner size="large" />
-          <p class="loading-text">{{ appStore.loadingMessage || '加载中...' }}</p>
+          <p class="loading-text">{{ appStore.state.loadingMessage || '加载中...' }}</p>
         </div>
       </div>
     </transition>
@@ -59,7 +59,7 @@
         </div>
         <div class="debug-item">
           <span>当前主题:</span>
-          <span>{{ appStore.currentTheme }}</span>
+          <span>{{ appStore.state.currentTheme }}</span>
         </div>
         <div class="debug-item">
           <span>双拼方案:</span>
@@ -67,7 +67,7 @@
         </div>
         <div class="debug-item">
           <span>练习状态:</span>
-          <span>{{ practiceStore.isActive ? '进行中' : '未开始' }}</span>
+          <span>{{ practiceStore.state.isActive ? '进行中' : '未开始' }}</span>
         </div>
       </div>
     </div>
@@ -101,11 +101,11 @@ const isDevelopment = ref(process.env.NODE_ENV === 'development')
 
 // 计算属性
 const appClasses = computed(() => ({
-  'app--mobile': appStore.isMobile,
-  'app--dark': appStore.currentTheme === 'dark',
-  'app--loading': appStore.isLoading,
-  'app--modal-open': appStore.isModalOpen,
-  [`app--theme-${appStore.currentTheme}`]: true
+  'app--mobile': appStore.state.device?.isMobile || false,
+  'app--dark': appStore.state.currentTheme === 'dark',
+  'app--loading': appStore.state.isLoading,
+  'app--modal-open': appStore.state.isModalOpen,
+  [`app--theme-${appStore.state.currentTheme}`]: true
 }))
 
 // 方法
@@ -177,7 +177,7 @@ const handleGlobalShortcuts = (event) => {
     
     // Escape: 关闭模态框/通知
     'Escape': () => {
-      if (appStore.isModalOpen) {
+      if (appStore.state.isModalOpen) {
         appStore.closeModal()
       } else {
         appStore.clearNotifications()
@@ -237,7 +237,7 @@ const handleThemeChange = () => {
 const setupRouterGuards = () => {
   router.beforeEach((to, from, next) => {
     // 显示页面加载状态
-    if (to.meta?.requiresAuth && !appStore.isAuthenticated) {
+    if (to.meta?.requiresAuth && !appStore.state.isAuthenticated) {
       // 如果需要认证但未登录，重定向到登录页
       next('/login')
       return
@@ -289,7 +289,7 @@ const setupErrorHandling = () => {
 const initializeApp = async () => {
   try {
     // 显示加载状态
-    appStore.setLoading(true, '正在初始化应用...')
+    appStore.setLoadingWithMessage(true, '正在初始化应用...')
 
     // 初始化stores
     await Promise.all([

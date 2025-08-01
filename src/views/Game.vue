@@ -218,9 +218,11 @@
 
 <script setup>
   import { ref, computed, onUnmounted } from 'vue'
-  import { useShuangpinStore } from '../stores/shuangpin'
+  import { useShuangpinStore } from '@/stores/shuangpin'
+  import { usePracticeStore } from '@/stores/practice'
 
-  const store = useShuangpinStore()
+  const shuangpinStore = useShuangpinStore()
+  const practiceStore = usePracticeStore()
 
   // 游戏状态
   const currentGame = ref(null)
@@ -272,7 +274,8 @@
 
   // 历史最高分
   const topScores = computed(() => {
-    return store.gameScores.sort((a, b) => b.score - a.score).slice(0, 10)
+    const gameScores = shuangpinStore.gameScores || []
+    return gameScores.sort((a, b) => b.score - a.score).slice(0, 10)
   })
 
   // 开始游戏

@@ -88,8 +88,23 @@ export const useAppStore = defineStore('app', () => {
 
     // 应用状态
     isLoading: false,
+    loadingMessage: '',
     isOnline: navigator.onLine,
     lastSyncTime: null,
+
+    // 设备信息
+    device: {
+      isMobile: false,
+      isTablet: false,
+      isDesktop: true
+    },
+
+    // 路由状态
+    currentRoute: null,
+
+    // 模态框状态
+    isModalOpen: false,
+    currentModal: null,
 
     // 错误状态
     errors: [],
@@ -332,6 +347,58 @@ export const useAppStore = defineStore('app', () => {
     })
   }
 
+  // 设备检测
+  const detectDevice = () => {
+    const userAgent = navigator.userAgent
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+    const isTablet = /iPad|Android(?=.*\bMobile\b)/i.test(userAgent)
+    const isDesktop = !isMobile && !isTablet
+
+    state.device = {
+      isMobile,
+      isTablet,
+      isDesktop,
+      userAgent,
+      platform: navigator.platform,
+      language: navigator.language
+    }
+
+    // 添加设备类型到 body 类名
+    document.body.classList.toggle('is-mobile', isMobile)
+    document.body.classList.toggle('is-tablet', isTablet)
+    document.body.classList.toggle('is-desktop', isDesktop)
+
+    return state.device
+  }
+
+  // 设置当前路由
+  const setCurrentRoute = (route) => {
+    state.currentRoute = {
+      name: route.name,
+      path: route.path,
+      params: route.params,
+      query: route.query,
+      meta: route.meta
+    }
+  }
+
+  // 模态框状态管理
+  const openModal = (modalData) => {
+    state.isModalOpen = true
+    state.currentModal = modalData
+  }
+
+  const closeModal = () => {
+    state.isModalOpen = false
+    state.currentModal = null
+  }
+
+  // 加载状态管理（带消息）
+  const setLoadingWithMessage = (loading, message = '') => {
+    state.isLoading = loading
+    state.loadingMessage = message
+  }
+
   // 初始化
   const init = () => {
     loadSettings()
@@ -385,6 +452,7 @@ export const useAppStore = defineStore('app', () => {
     saveSettings,
     loadSettings,
     setLoading,
+    setLoadingWithMessage,
     addError,
     clearErrors,
     addNotification,
@@ -396,6 +464,10 @@ export const useAppStore = defineStore('app', () => {
     exportAppData,
     importAppData,
     resetApp,
+    detectDevice,
+    setCurrentRoute,
+    openModal,
+    closeModal,
     init
   }
 })

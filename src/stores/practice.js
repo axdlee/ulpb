@@ -948,6 +948,17 @@ export const usePracticeStore = defineStore('practice', () => {
     return getAllLessons()
   }
 
+  const loadRecentSessions = async () => {
+    try {
+      const saved = storageManager.getData('recentSessions', [])
+      state.recentSessions = saved
+      return saved
+    } catch (error) {
+      console.error('加载最近练习记录失败:', error)
+      return []
+    }
+  }
+
   // 初始化方法
   const init = async () => {
     try {
@@ -1023,6 +1034,7 @@ export const usePracticeStore = defineStore('practice', () => {
     getLessonStats,
     getOverallProgress,
     loadLessons,
+    loadRecentSessions,
 
     // 初始化
     init

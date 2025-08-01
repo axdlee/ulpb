@@ -555,7 +555,10 @@ export const useShuangpinStore = defineStore('shuangpin', {
     keyMastery: {},
 
     // 方案比较数据
-    comparisonData: null
+    comparisonData: null,
+    
+    // 游戏分数记录
+    gameScores: []
   }),
 
   getters: {
